@@ -1,3 +1,5 @@
+import java.util.Date;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Raft {
 
@@ -11,8 +13,10 @@ public class Raft {
 	private void startRaft() {
 		while(true) {
 			try{
-				Thread.sleep()
-			}catch(Exception e)
+				Thread.sleep(0); //TODO: change number from 0 to something else
+			}catch(Exception e) {
+				
+			}
 		}
 		
 	}
@@ -27,7 +31,7 @@ public class Raft {
 	public void voteLeader() {
 		boolean didVote=true;
 	}
-	public setLeader() {
+	public void setLeader() {
 		didVote=false;
 		term = term+1;
 	}
