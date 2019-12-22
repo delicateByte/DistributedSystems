@@ -10,6 +10,10 @@ public class Sender implements Runnable {
     private PrintWriter out;
     private BufferedReader in;
 
+    public String getLeader() {
+    	//TODO: Gibt den Leader in der COntacts Table zurück
+    	return "This is our leader";
+    }
     public void startConnection(String ip, int port) {
         try {
 			clientSocket = new Socket(ip, port);
