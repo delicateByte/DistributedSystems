@@ -1,6 +1,8 @@
 package main;
-import java.io.IOException;
-import java.util.Scanner;
+
+import java.util.ArrayList;
+import main.ChatMessage;
+import files.FileSyncManager;
 
 public class Main {
 
@@ -8,11 +10,11 @@ public class Main {
         Thread listenerThread = new Thread( new Listener());
         Thread senderThread = new Thread( new Sender());
 
-        listenerThread.start();
-        senderThread.start();
+//        listenerThread.start();
+//        senderThread.start();
+        
+        FileSyncManager.syncToFile("192.168.178.51-2314", new ArrayList<ChatMessage>());
     }
-
-
 }
 
 

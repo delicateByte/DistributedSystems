@@ -1,12 +1,13 @@
+package main;
 
-public class Message {
+public class ChatMessage {
 	
 	String text;
 	String sender;
 	int id;
 	
 	
-	public Message(int id, String text, String sender) {
+	public ChatMessage(int id, String text, String sender) {
 		super();
 		this.text = text;
 		this.sender = sender;
