@@ -1,4 +1,5 @@
-*.ciao # DistributedSystems file sync files
+*.ciao
+# DistributedSystems file sync files
 
 
 # Created by https://www.gitignore.io/api/eclipse

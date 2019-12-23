@@ -17,7 +17,7 @@ public class FileSyncManager {
 	 * @param messages the arraylist that contains the mesages
 	 */
 	public static void syncToFile(String identifier, ArrayList<ChatMessage> messages) {
-		if (bw == null) {
+		if (bw == null) {s
 			try {
 				bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
 			} catch (IOException e) {
