@@ -1,4 +1,6 @@
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Raft {
@@ -9,20 +11,49 @@ public class Raft {
 	String clientList[][];
 	Date lastVote;
 	boolean didVote=false;
-	
-	private void startRaft() {
-		while(true) {
+	private Sender sender;
+	private int cycle;
+	public Raft(Sender sender) {
+	 this.sender = sender;
+	}
+
+	Timer electionTimeout = new Timer("raftCycle-0");
+	TimerTask raftCycleManager = new TimerTask() {
+		public void run() {
 			try{
-				Thread.sleep(0); //TODO: change number from 0 to something else
+				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); //TODO: is time to short ?
 			}catch(Exception e) {
 				
 			}
+			if(sender.getLeader() == null ) {
+				becomeCanidate();
+			}
 		}
 		
+	};
+	
+	
+	
+	public Message cacheChange(Message msg) {
+		return msg;
 	}
-	private int votingCycle() {
-		int random = ThreadLocalRandom.current().nextInt(10, 150);
-		return 150 + random;
+	public void restartElectionTimeout() {
+		electionTimeout.cancel();
+		electionTimeout.purge();
+		electionTimeout = new Timer ("Raftcycle-"+cycle);
+		electionTimeout.schedule(raftCycleManager, 10);
+	}
+	public void hearthbeatResetElectionTimout() {
+		restartElectionTimeout();
+		
+	}
+	private void startRaft() {
+		
+		
+	}
+	private long votingCycle() {
+		int random = (ThreadLocalRandom.current().nextInt(10, 150) +150 );
+		return  Long.valueOf(random);
 	}
 	
 	private void becomeCanidate() {
@@ -30,6 +61,9 @@ public class Raft {
 	}
 	public void voteLeader() {
 		boolean didVote=true;
+		electionTimeout.cancel();
+		electionTimeout.purge();
+		
 	}
 	public void setLeader() {
 		didVote=false;
