@@ -14,6 +14,12 @@ public class Sender implements Runnable {
     	//TODO: Gibt den Leader in der COntacts Table zurück
     	return "This is our leader";
     }
+    
+    public void sendHeartbeat() {
+    	
+    	
+    }
+    
     public void startConnection(String ip, int port) {
         try {
 			clientSocket = new Socket(ip, port);

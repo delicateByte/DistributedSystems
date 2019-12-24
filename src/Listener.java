@@ -24,6 +24,12 @@ public class Listener implements Runnable {
             }
         }
     }
+    
+    
+    public void recieveHeartbeat() {
+    	
+    }
+    
     public void startConnection(String ip, int port) {
         try {
             clientSocket = new Socket(ip, port);
