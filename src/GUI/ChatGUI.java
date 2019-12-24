@@ -116,6 +116,6 @@ public class ChatGUI extends JFrame{
 	 */
 	public void registerListener(ChatListener listener) {
 		this.listener = listener;
-		listener.onMessageSend(message);
+//		listener.onMessageSend(message);
 	}
 }
