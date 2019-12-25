@@ -1,13 +1,15 @@
 package main;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Raft {
+import files.FileSyncManager;
+
+public class Raft implements Runnable {
 
 	private String role;
 	int term;
@@ -15,17 +17,19 @@ public class Raft {
 	String clientList[][];
 	Date lastVote;
 	boolean didVote = false;
-	private Sender sender;
+	private Thread sender;
 	private int cycle;
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
+	private FileSyncManager fileWriter;
 
-	public Raft(Sender sender, FileSyncManager fSM) {
+	public Raft(Thread sender) {
 		this.sender = sender;
-		this.fileWriter = fSM;
+		
 	}
 
 	Timer electionTimeout = new Timer("raftCycle-0");
 	TimerTask raftCycleManager = new TimerTask() {
+		
 		public void run() {
 			try {
 				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); // TODO: is time to short ?
@@ -48,8 +52,8 @@ public class Raft {
 			}
 		}
 		if (msgFound) {
-			
-		}else {
+
+		} else {
 			messageCache.add(msg);
 		}
 		return msg;
@@ -90,6 +94,12 @@ public class Raft {
 	public void setLeader() {
 		didVote = false;
 		term = term + 1;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
