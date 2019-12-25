@@ -14,10 +14,10 @@ public class FileSyncManager {
 	/**
 	 * Syncs the content of the the arraylist to a file 
 	 * @param identifier a unique id for this instance (for example IP+Port)
-	 * @param messages the arraylist that contains the mesages
+	 * @param messages the arraylist that contains the messages
 	 */
 	public static void syncToFile(String identifier, ArrayList<ChatMessage> messages) {
-		if (bw == null) {s
+		if (bw == null) {
 			try {
 				bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
 			} catch (IOException e) {
