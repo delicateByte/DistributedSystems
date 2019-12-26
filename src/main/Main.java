@@ -12,7 +12,7 @@ public class Main {
         Thread senderThread = new Thread( new Sender());
 
 //        listenerThread.start();
-//        senderThread.start();
+//        senderThread.start();	
         
 //        List<ChatMessage> messages = new ArrayList<ChatMessage>();
 //        ChatMessage temp = new ChatMessage(3, "Lorem Ipsum xyz", "192.168.178.51-2314");
