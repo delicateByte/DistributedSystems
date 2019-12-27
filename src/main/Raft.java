@@ -16,6 +16,7 @@ public class Raft implements Runnable {
 	String currentLeader;
 	String clientList[][];
 	Date lastVote;
+	ChatMessageCommands enumToCompare;
 	boolean didVote = false;
 	private Thread sender;
 	private int cycle;
@@ -26,7 +27,40 @@ public class Raft implements Runnable {
 		this.sender = sender;
 		
 	}
-
+	
+	
+	public void LogReplication(ChatMessage msg) {
+		if(role == "Leader") {
+			// chache Message
+			// send msg to all Clients
+			// await responses
+			// send to all the write Command
+			// 
+		}else {
+			if(msg.getCommand() == enumToCompare.NewMessageToCache) {
+			
+			}else if(msg.getCommand() == enumToCompare.NewMessageToCache)
+			// TODO: write to file
+			// check if writen to file 
+			// Delete from list 
+			// send response to Leader 
+				await 
+			Iterator<ChatMessage> itrMsg = messageCache.iterator();
+			boolean msgFound = false;
+			while (itrMsg.hasNext()) {
+				if (itrMsg.next().getText() == msg.getText()) {
+					msgFound = true;
+				}
+			}
+			if (msgFound) {
+				// TODO: Write new Message to file 
+			} else {
+				messageCache.add(msg);
+			}
+			return msg;
+		}
+		}
+	}
 	Timer electionTimeout = new Timer("raftCycle-0");
 	TimerTask raftCycleManager = new TimerTask() {
 		
@@ -42,22 +76,14 @@ public class Raft implements Runnable {
 		}
 
 	};
-
-	public ChatMessage cacheChange(ChatMessage msg) {
-		Iterator<ChatMessage> itrMsg = messageCache.iterator();
-		boolean msgFound = false;
-		while (itrMsg.hasNext()) {
-			if (itrMsg.next().getText() == msg.getText()) {
-				msgFound = true;
-			}
+	
+	public ChatMessage manageMessage(ChatMessage msg) {
+		if(role == "Leader") {
+			LogReplication(msg);
+		}else {
+			Client leader = this.sender.getLeader();
+			this.sender.sendMessage(msg,leader.getIp(), leader.getPort(), "FORWARD")
 		}
-		if (msgFound) {
-
-		} else {
-			messageCache.add(msg);
-		}
-		return msg;
-	}
 
 	public void restartElectionTimeout() {
 		electionTimeout.cancel();
@@ -68,7 +94,6 @@ public class Raft implements Runnable {
 
 	public void hearthbeatResetElectionTimout() {
 		restartElectionTimeout();
-
 	}
 
 	private void startRaft() {
