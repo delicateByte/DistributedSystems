@@ -7,11 +7,35 @@ public class Client  {
        private int port;
        private String name;
        private  int rights;
-       public client (String ip, int port) {
+       public Client(String ip, int port) {
     	   this.ip = ip;
     	   this.port = port;
        }
 	
+       public String getIp() {
+    	   return this.ip;
+       }
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setIp(String ip) {
+		this.ip = ip;
+	}
+       
 	/* private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
