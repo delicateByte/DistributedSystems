@@ -13,18 +13,13 @@ public class Sender implements Runnable {
 
     public Client getLeader() {
     	//TODO: Gibt den Leader in der COntacts Table zurück
-    	Client client = new client();
+    	Client client = new Client("127.0.0.1", 12345);
     	return client;
     }
     
     public void Heartbeat() {
     	// contains Hash of all MEssages 
     	// last message writen in clear
-    	
-    }
-    // to Pass aditional Information with Heartbeat we need an overload function
-    public void Heartbeat() {
-    	
     	
     }
     
@@ -39,7 +34,7 @@ public class Sender implements Runnable {
 		}
     }
 
-    public String sendMessage(String msg,String ip, String port, String Command ) {
+    public String sendMessage(ChatMessage msg,String ip, int port, ChatMessageCommands Command ) {
         out.println(msg);
         String resp = "error";
 		try {
