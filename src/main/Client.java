@@ -2,8 +2,17 @@ package main;
 import java.net.*;
 import java.io.*;
 
-public class Client implements Runnable {
-        private Socket clientSocket;
+public class Client  {
+       private String ip;
+       private int port;
+       private String name;
+       private  int rights;
+       public client (String ip, int port) {
+    	   this.ip = ip;
+    	   this.port = port;
+       }
+	
+	/* private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
         private Boolean connectionStatus =true;
@@ -48,6 +57,6 @@ public class Client implements Runnable {
             }
 
         }
-
+*/
 
 }
