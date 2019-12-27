@@ -2,7 +2,7 @@ package main;
 
 public enum ChatMessageCommands {
 	Hearthbeat,
-	NewMessageForwasrdedToLeader,
+	NewMessageForwardedToLeader,
 	NewMessageToCache,
 	MessageCached,
 	WriteMessage
