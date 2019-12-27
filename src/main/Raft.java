@@ -18,12 +18,12 @@ public class Raft implements Runnable {
 	Date lastVote;
 	ChatMessageCommands enumToCompare;
 	boolean didVote = false;
-	private Thread sender;
+	private Sender sender;
 	private int cycle;
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
 	private FileSyncManager fileWriter;
 
-	public Raft(Thread sender) {
+	public Raft(Sender sender) {
 		this.sender = sender;
 		
 	}
@@ -43,8 +43,7 @@ public class Raft implements Runnable {
 			// TODO: write to file
 			// check if writen to file 
 			// Delete from list 
-			// send response to Leader 
-				await 
+			// send response to Leader  
 			Iterator<ChatMessage> itrMsg = messageCache.iterator();
 			boolean msgFound = false;
 			while (itrMsg.hasNext()) {
