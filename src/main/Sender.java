@@ -11,13 +11,15 @@ public class Sender implements Runnable {
     private PrintWriter out;
     private BufferedReader in;
 
-    public String getLeader() {
+    public Client getLeader() {
     	//TODO: Gibt den Leader in der COntacts Table zurück
-    	return "This is our leader";
+    	Client client = new client();
+    	return client;
     }
     
     public void Heartbeat() {
-    	
+    	// contains Hash of all MEssages 
+    	// last message writen in clear
     	
     }
     // to Pass aditional Information with Heartbeat we need an overload function
