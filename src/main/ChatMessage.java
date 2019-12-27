@@ -5,6 +5,7 @@ public class ChatMessage {
 	String text;
 	String sender;
 	int id;
+	ChatMessageCommands command;
 	
 	
 	public ChatMessage(int id, String text, String sender) {
@@ -22,5 +23,10 @@ public class ChatMessage {
 	}
 	public int getId() {
 		return id;
+	}
+
+	public ChatMessageCommands getCommand() {
+		// TODO Auto-generated method stub
+		return command;
 	}
 }
