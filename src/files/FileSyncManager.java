@@ -16,7 +16,7 @@ import main.ChatMessage;
 public class FileSyncManager {
 	static BufferedWriter bw;
 	static BufferedReader br;
-	static ArrayList<ChatMessage> cachedMessages = new ArrayList<ChatMessage>();
+	 public static ArrayList<ChatMessage> cachedMessages = new ArrayList<ChatMessage>();
 
 	/**
 	 * Syncs the content of the the arraylist to a file 
