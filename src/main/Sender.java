@@ -16,7 +16,12 @@ public class Sender implements Runnable {
     	return "This is our leader";
     }
     
-    public void sendHeartbeat() {
+    public void Heartbeat() {
+    	
+    	
+    }
+    // to Pass aditional Information with Heartbeat we need an overload function
+    public void Heartbeat() {
     	
     	
     }
