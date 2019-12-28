@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import files.FileSyncManager;
 
 public class Raft implements Runnable {
-	
+
 	// Raft specific
 	private int role; // Roles: 0 - Follower | 1 - Candidate | 2 - Leader
 	private int term; // Term Counter of the current Raft NEtwork of this Node
@@ -20,13 +20,14 @@ public class Raft implements Runnable {
 
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	TimerTask raftCycleManager = new TimerTask() 
-	{
+	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
 			try {
 				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); // TODO: is time to short ?
 			} catch (Exception e) {
 
+			}if(role==1) {
+				resetVote();
 			}
 			if (sender.getLeader() == null) {
 				becomeCanidate();
@@ -34,20 +35,17 @@ public class Raft implements Runnable {
 		}
 
 	};
-	
+
 	// Utilities
 	private Sender sender;
 	private FileSyncManager fileWriter;
 
-	
 	// Raft Thread Constructor
 	public Raft(Sender sender) {
 		this.sender = sender;
 		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
 	}
 
-	
-	
 	public void LogReplication(ChatMessage msg) {
 		if (role == 2) {
 			// chache Message
@@ -85,7 +83,11 @@ public class Raft implements Runnable {
 		electionTimeout = new Timer("Raftcycle-" + cycle);
 		electionTimeout.schedule(raftCycleManager, 10);
 	}
-
+	public void resetVote() {
+		role =1;
+		didVote=0;
+	}
+	public 
 	public void hearthbeatResetElectionTimout() {
 		restartElectionTimeout();
 	}
@@ -97,15 +99,18 @@ public class Raft implements Runnable {
 
 	private void becomeCanidate() {
 		role = 1;
-		// Vote for myself 
-		didVote = true;
-		term = term +1;
+		voteLeader();
+		term = term + 1;
 		int votes = 1;
-		ChatMessage voteForMeMessage = new ChatMessage(0, "Vote for me I am the best and I hate the AfD", "TESTIP+TESTPORT", ChatMessageCommands.RequestVoteForMe);
+		ChatMessage voteForMeMessage = new ChatMessage(0, "Vote for me I am the best and I hate the AfD",
+				"TESTIP+TESTPORT", ChatMessageCommands.RequestVoteForMe);
 		sender.sendMessageToAllNodes(voteForMeMessage, ChatMessageCommands.RequestVoteForMe);
-	
-		// Check if responses are in 
-		
+
+		// Check if responses are in
+		votes = 0;
+		if (votes < (sender.countActiveNodesInCurrentNetwork() / 2)) {
+
+		}
 	}
 
 	public void voteLeader() {
