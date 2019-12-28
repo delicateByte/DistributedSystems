@@ -6,10 +6,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
+import networking.NetworkListener;
+import networking.OutgoingServer;
 import storage.FileSyncManager;
 
-public class Raft implements Runnable {
-	
+public class Raft implements Runnable, NetworkListener {
+
 	// Raft specific
 	private int role; // Roles: 0 - Follower | 1 - Candidate | 2 - Leader
 	private int term; // Term Counter of the current Raft NEtwork of this Node
@@ -20,8 +22,7 @@ public class Raft implements Runnable {
 
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	TimerTask raftCycleManager = new TimerTask() 
-	{
+	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
 			try {
 				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); // TODO: is time to short ?
@@ -34,21 +35,18 @@ public class Raft implements Runnable {
 		}
 
 	};
-	
+
 	// Utilities
-	private Sender sender;
+	private OutgoingServer sender;
 	private FileSyncManager fileWriter;
 
-	
 	// Raft Thread Constructor
-	public Raft(Sender sender) {
-		this.sender = sender;
+	public Raft() {
+		sender = new OutgoingServer();
 		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
 	}
 
-	
-	
-	public void LogReplication(ChatMessage msg) {
+	public void LogReplication(Message msg) {
 		if (role == 2) {
 			// chache Message
 			// send msg to all Clients
@@ -56,9 +54,9 @@ public class Raft implements Runnable {
 			// send to all the write Command
 			//
 		} else {
-			if (msg.getCommand() == ChatMessageCommands.NewMessageToCache) {
+			if (msg.getType() == MessageType.NewMessageToCache) {
 
-			} else if (msg.getCommand() == ChatMessageCommands.NewMessageToCache) {
+			} else if (msg.getType() == MessageType.NewMessageToCache) {
 				// TODO: write to file
 				// check if writen to file
 				// Delete from list
@@ -68,13 +66,13 @@ public class Raft implements Runnable {
 		}
 	}
 
-	public ChatMessage manageMessage(ChatMessage msg) {
+	public Message manageMessage(Message msg) {
 		if (role == 2) {
 			LogReplication(msg);
 		} else {
 			Client leader = this.sender.getLeader();
-			this.sender.sendMessage(msg, leader.getIp(), leader.getPort(),
-					ChatMessageCommands.NewMessageForwardedToLeader);
+			//TODO: bei der Stelle weiﬂ ich nicht ganz wie ich das am besten w‰re
+			this.sender.sendMessage(msg, leader.getIp(), leader.getPort(), MessageType.NewMessageForwardedToLeader);
 		}
 		return msg;
 	}
@@ -97,15 +95,16 @@ public class Raft implements Runnable {
 
 	private void becomeCanidate() {
 		role = 1;
-		// Vote for myself 
+		// Vote for myself
 		didVote = true;
-		term = term +1;
+		term = term + 1;
 		int votes = 1;
-		ChatMessage voteForMeMessage = new ChatMessage(0, "Vote for me I am the best and I hate the AfD", "TESTIP+TESTPORT", ChatMessageCommands.RequestVoteForMe);
-		sender.sendMessageToAllNodes(voteForMeMessage, ChatMessageCommands.RequestVoteForMe);
-	
-		// Check if responses are in 
-		
+		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I hate the AfD",
+				MessageType.RequestVoteForMe);
+		sender.broadcastMessage(voteForMeMessage);
+
+		// Check if responses are in
+
 	}
 
 	public void voteLeader() {
@@ -123,6 +122,30 @@ public class Raft implements Runnable {
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onMessageReceived(Message message) {
+		// TODO was soll passieren wenn du eine message bekommst?
+		switch (message.getType()) {
+		case AlreadyVoted:
+			break;
+		case Heartbeat:
+			break;
+		case MessageCached:
+			break;
+		case NewMessageForwardedToLeader:
+			break;
+		case NewMessageToCache:
+			break;
+		case RequestVoteForMe:
+			break;
+		case Vote:
+			break;
+		case WriteMessage:
+			break;
+		}
 
 	}
 
