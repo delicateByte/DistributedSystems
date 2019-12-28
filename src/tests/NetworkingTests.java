@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
+import main.Client;
 import main.Message;
 import main.MessageType;
 import networking.IncomingServer;
@@ -28,7 +29,7 @@ public class NetworkingTests implements NetworkListener {
 		
 		OutgoingServer out = new OutgoingServer();
 		everythingOkay = false;
-		out.sendMessage(message, "localhost-3503");
+		out.sendMessage(message, new Client("localhost", 3503));
 		
 		try {
 			Thread.sleep(3000);
