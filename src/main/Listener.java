@@ -53,9 +53,9 @@ public class Listener implements Runnable {
 
     }
 
-    public int aggregateVoteResponses(ChatMessage msg) {
+    public int aggregateVoteResponses(Message msg) {
     	
-    	switch (msg.command) {
+    	switch (msg.getType()) {
         case Vote:  
                  break;
         case RequestVoteForMe:  
