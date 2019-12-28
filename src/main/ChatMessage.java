@@ -1,19 +1,17 @@
 package main;
 
-public class ChatMessage {
+public class ChatMessage implements Comparable<ChatMessage>{
 	
 	String text;
 	String sender;
 	int id;
-	ChatMessageCommands command;
 	
 	// was ist ID, Was ist sender ?
-	public ChatMessage(int id, String text, String sender, ChatMessageCommands cmd) {
+	public ChatMessage(int id, String text, String sender) {
 		super();
 		this.text = text;
 		this.sender = sender;
 		this.id = id;
-		this.command = cmd;
 	}
 	
 	public String getText() {
@@ -26,8 +24,13 @@ public class ChatMessage {
 		return id;
 	}
 
-	public ChatMessageCommands getCommand() {
-		// TODO Auto-generated method stub
-		return command;
+	@Override
+	public int compareTo(ChatMessage otherMessage) {
+		if(this.getId() > otherMessage.getId())
+			return 1;
+		else if(this.getId() < otherMessage.getId())
+			return -1;
+		else
+			return 0;
 	}
 }
