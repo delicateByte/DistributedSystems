@@ -6,8 +6,10 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
+
 import networking.NetworkListener;
 import networking.OutgoingServer;
+import networking.Phonebook;
 import storage.FileSyncManager;
 
 public class Raft implements Runnable, NetworkListener {
@@ -19,6 +21,7 @@ public class Raft implements Runnable, NetworkListener {
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
 	private boolean didVote = false;
 	private Date lastVote;
+	private Phonebook phonebook = new Phonebook();
 
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
@@ -41,37 +44,19 @@ public class Raft implements Runnable, NetworkListener {
 	private OutgoingServer sender;
 	private FileSyncManager fileWriter;
 	
-	// Contacts table
-	private ArrayList<Client> phonebook = new ArrayList<Client>();
+	
 	// Raft Thread Constructor
 	public Raft() {
 		sender = new OutgoingServer();
 		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
 	}
 
-	public Client getLeader() {
-		Iterator<Client> itrClient = phonebook.iterator();
-		Client leader = null;
-		while (itrClient.hasNext()) {
-			if (itrClient.next().getRights() == 2) {
-				System.out.println(itrClient.next());
-				leader = itrClient.next();
-			}else {
-				//TODO: HOW HANDLE IF NO LEADER IS FOUND AT A POINT IN TIME 
-			}
-		}
-		return leader;
-		
-	}
+
 	// after Recieving a I am Your Leader MEssage
 	public void newLeaderChosen() {
 		
 	}
 	
-	// add a new Client named Clint to the phonebook
-	public void addNewClientToPhonebook(Client clint) {
-		
-	}
 	public void LogReplication(Message msg) {
 		if (role == 2) {
 			// chache Message
@@ -96,7 +81,7 @@ public class Raft implements Runnable, NetworkListener {
 		if (role == 2) {
 			LogReplication(msg);
 		} else {
-			Client leader = getLeader();
+			Client leader = phonebook.getLeader();
 			this.sender.sendMessage(msg,leader);
 		}
 		return msg;
