@@ -100,9 +100,11 @@ public class Raft implements Runnable {
 		// Vote for myself 
 		didVote = true;
 		term = term +1;
-		int Votes = 1;
-		
-		// send message Vote for Me
+		int votes = 1;
+		ChatMessage voteForMeMessage = new ChatMessage(0, "Vote for me I am the best and I hate the AfD", "TESTIP+TESTPORT", ChatMessageCommands.RequestVoteForMe);
+		sender.sendMessageToAllNodes(voteForMeMessage, ChatMessageCommands.RequestVoteForMe);
+	
+		// Check if responses are in 
 		
 	}
 
