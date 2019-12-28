@@ -36,7 +36,7 @@ public class Phonebook {
 	}
 
 	public void addNewNode() {
-
+		
 	}
 
 	public void deleteClient(Client client) {
@@ -51,5 +51,13 @@ public class Phonebook {
 
 		return this.phonebook;
 
+	}
+	public int countPhonebookEntries() {
+		return 0;
+	}
+	//return final merged Phonebook
+	public ArrayList<Client> mergeTwoPhonebooks(ArrayList<Client> pb1,ArrayList<Client> pb2) {
+		ArrayList<Client> finalPhonebook = new ArrayList<Client>();
+		return finalPhonebook;
 	}
 }
