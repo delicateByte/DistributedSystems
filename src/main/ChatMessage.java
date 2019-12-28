@@ -6,7 +6,6 @@ public class ChatMessage implements Comparable<ChatMessage>{
 	String sender;
 	int id;
 	
-	// was ist ID, Was ist sender ?
 	public ChatMessage(int id, String text, String sender) {
 		super();
 		this.text = text;

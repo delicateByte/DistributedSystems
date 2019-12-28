@@ -11,7 +11,9 @@ import networking.NetworkListener;
 import networking.OutgoingServer;
 import networking.Phonebook;
 import storage.FileSyncManager;
-
+//TODO: Two Leader = leader with Higher term takes it & Merge Client Lists 
+//TODO: Task List with all open Tasks
+// TODO: Filewrite 
 public class Raft implements Runnable, NetworkListener {
 
 	// Raft specific
@@ -31,11 +33,15 @@ public class Raft implements Runnable, NetworkListener {
 				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); // TODO: is time to short ?
 			} catch (Exception e) {
 
-			}if(role==1) {
+			}
+			if (role == 1) {
 				resetVote();
 			}
-				becomeCanidate();
-			//TODO:	setLeaderNotActive();
+			phonebook.deactivateLeader();
+			becomeCanidate();
+			// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a problem with the Leader and a new needs to be elected
+			
+			// TODO: setLeaderNotActive();
 		}
 
 	};
@@ -43,20 +49,17 @@ public class Raft implements Runnable, NetworkListener {
 	// Utilities
 	private OutgoingServer sender;
 	private FileSyncManager fileWriter;
-	
-	
+
 	// Raft Thread Constructor
 	public Raft() {
 		sender = new OutgoingServer();
-		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
 	}
-
 
 	// after Recieving a I am Your Leader MEssage
-	public void newLeaderChosen() {
-		
+	public void newLeaderChosen(Client clnt) {
+		phonebook.newLeader(clnt);
 	}
-	
+
 	public void LogReplication(Message msg) {
 		if (role == 2) {
 			// chache Message
@@ -82,7 +85,7 @@ public class Raft implements Runnable, NetworkListener {
 			LogReplication(msg);
 		} else {
 			Client leader = phonebook.getLeader();
-			this.sender.sendMessage(msg,leader);
+			this.sender.sendMessage(msg, leader);
 		}
 		return msg;
 	}
@@ -93,11 +96,12 @@ public class Raft implements Runnable, NetworkListener {
 		electionTimeout = new Timer("Raftcycle-" + cycle);
 		electionTimeout.schedule(raftCycleManager, 10);
 	}
+
 	public void resetVote() {
-		role =1;
-		didVote=false;
+		role = 1;
+		didVote = false;
 	}
-	
+
 	public void hearthbeatResetElectionTimout() {
 		restartElectionTimeout();
 	}
@@ -120,7 +124,7 @@ public class Raft implements Runnable, NetworkListener {
 		votes = 0;
 		// TODO: if (votes < (sender.countActiveNodesInCurrentNetwork() / 2)) {
 		//
-		//}
+		// }
 	}
 
 	public void voteLeader() {
@@ -134,13 +138,15 @@ public class Raft implements Runnable, NetworkListener {
 		didVote = false;
 		term = term + 1;
 	}
+
 	public void initialJoin() {
-		
+
 	}
+
 	@Override
 	public void run() {
-		initialJoin();
-		
+		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
+
 	}
 
 	@Override
@@ -168,3 +174,5 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 }
+
+
