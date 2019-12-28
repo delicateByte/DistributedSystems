@@ -2,10 +2,10 @@ package main;
 
 public class Message {
 	private String sender;
-	private Object payload;
+	private String payload;
 	private MessageType type;
 	
-	public Message(String sender, Object payload, MessageType type) {
+	public Message(String sender, String payload, MessageType type) {
 		this.sender = sender;
 		this.payload = payload;
 		this.type = type;
@@ -14,7 +14,7 @@ public class Message {
 	public String getSender() {
 		return sender;
 	}
-	public Object getPayload() {
+	public String getPayload() {
 		return payload;
 	}
 	public MessageType getType() {

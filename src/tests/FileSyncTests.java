@@ -16,28 +16,23 @@ class FileSyncTests {
 	void saveAndLoad() {
 		// initialize and add arbitrary messages
 		FileSyncManager.initBlank();
-		FileSyncManager.addMessage(new ChatMessage(
-				3, "Lorem Ip|sum xyz", "192.168.178.51-2314"));
-		FileSyncManager.addMessage(new ChatMessage(
-				3, "Lorem Ip-sum xyz", "192.168.178.52-2314"));
-		FileSyncManager.addMessage(new ChatMessage(
-				3, "Lorem Ip-sum x|yz", "192.168.178.51-2314"));
-		FileSyncManager.addMessage(new ChatMessage(
-				3, "Lorem Ipsum xyz", "192.168.178.51-2315"));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip|sum xyz", "192.168.178.51-2314"));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip-sum xyz", "192.168.178.52-2314"));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip-sum x|yz", "192.168.178.51-2314"));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ipsum xyz", "192.168.178.51-2315"));
 		String id = "192.168.178.51-2314";
 		List<ChatMessage> originalMessages = FileSyncManager.getMessages();
-		
+
 		// save and load messages for comparison
 		FileSyncManager.save(id);
 		FileSyncManager.initFromFile(id);
 		List<ChatMessage> loadedMessages = FileSyncManager.getMessages();
-		
-		if(originalMessages.size() != loadedMessages.size()) {
+
+		if (originalMessages.size() != loadedMessages.size()) {
 			fail("not same size lists");
-		}
-		else {
+		} else {
 			// for each message in the lists, compare each field
-			for(int i = 0; i < originalMessages.size(); i++) {
+			for (int i = 0; i < originalMessages.size(); i++) {
 				ChatMessage orig = originalMessages.get(i);
 				ChatMessage loaded = loadedMessages.get(i);
 				assertEquals(orig.getId(), loaded.getId());
