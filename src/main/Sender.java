@@ -46,6 +46,10 @@ public class Sender implements Runnable {
         return resp;
     }
 
+    // return something
+    public String sendMessageToAllNodes(ChatMessage msg, ChatMessageCommands cmd) {
+    	return "TEMPLATE";
+    }
     public void stopConnection() {
         try {
 			in.close();
