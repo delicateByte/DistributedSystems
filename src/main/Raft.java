@@ -139,8 +139,8 @@ public class Raft implements Runnable, NetworkListener {
 	}
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-
+		initialJoin();
+		
 	}
 
 	@Override
