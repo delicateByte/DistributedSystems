@@ -7,5 +7,6 @@ public enum ChatMessageCommands {
 	MessageCached,
 	WriteMessage,
 	Vote,
-	RequestVoteForMe
+	RequestVoteForMe,
+	AlreadyVoted
 }
