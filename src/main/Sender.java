@@ -22,6 +22,12 @@ public class Sender implements Runnable {
     	// last message writen in clear
     	
     }
+    // Return the number of active / valid nodes in Contacttable
+    public int countActiveNodesInCurrentNetwork() {
+    	int activeNodes=1;
+    	
+    	return activeNodes;
+    }
     
     public void startConnection(String ip, int port) {
         try {
