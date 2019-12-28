@@ -6,10 +6,11 @@ import java.util.List;
 import storage.FileSyncManager;
 
 public class Main {
-
+	// ARGS: IP ; PORT ; MODE
     public static void main(String[] args) {
         Thread listenerThread = new Thread( new Listener());
         Thread senderThread = new Thread( new Sender());
+       // FileSyncManager.initFromFile(null);                              <------------------------------------bengin pls help
     	if(args[2]== "CONNECT") {
     		/*
     		One Joins a new Network
@@ -21,7 +22,7 @@ public class Main {
     		- LEader sends a broadcast to all and says please add
     		- Await response of all 
     		- if no response from client xyz  retry with next heartbeat
-    		- if HEartbeat from LEader start Raft 
+    		- if HEartbeat from LEader -> start Raft 
     		- Here take the current phonebook
     		- take current Messages
     		- noraml raft stuff
