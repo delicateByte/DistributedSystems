@@ -9,64 +9,72 @@ import java.util.concurrent.ThreadLocalRandom;
 import files.FileSyncManager;
 
 public class Raft implements Runnable {
+	
 	// Raft specific
-	private int role; 					// Roles: 0 - Follower | 1 - Candidate | 2 - Leader
-	private int term;					// Term Counter of the current Raft NEtwork of this Node
-	private int cycle;					// Number of Election Timeouts within this node
+	private int role; // Roles: 0 - Follower | 1 - Candidate | 2 - Leader
+	private int term; // Term Counter of the current Raft NEtwork of this Node
+	private int cycle; // Number of Election Timeouts within this node
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
 	private boolean didVote = false;
 	private Date lastVote;
-	
-	// Raft Timer 
+
+	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	TimerTask raftCycleManager = new TimerTask() {
-		
+	TimerTask raftCycleManager = new TimerTask() 
+	{
 		public void run() {
 			try {
-				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1,10))); // TODO: is time to short ?
-	}catch(Exception e){
+				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); // TODO: is time to short ?
+			} catch (Exception e) {
 
-	}if(sender.getLeader()==null){becomeCanidate();}}
+			}
+			if (sender.getLeader() == null) {
+				becomeCanidate();
+			}
+		}
 
 	};
 	
 	// Utilities
 	private Sender sender;
 	private FileSyncManager fileWriter;
-	
 
+	
+	// Raft Thread Constructor
 	public Raft(Sender sender) {
 		this.sender = sender;
-
+		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
 	}
 
+	
+	
 	public void LogReplication(ChatMessage msg) {
-		if(role == 2) {
+		if (role == 2) {
 			// chache Message
 			// send msg to all Clients
 			// await responses
 			// send to all the write Command
-			// 
-		}else {
-			if(msg.getCommand() == ChatMessageCommands.NewMessageToCache) {
-			
-			}else if(msg.getCommand() == ChatMessageCommands.NewMessageToCache) {
-			// TODO: write to file
-			// check if writen to file 
-			// Delete from list 
-			// send response to Leader  
-		
-		}
+			//
+		} else {
+			if (msg.getCommand() == ChatMessageCommands.NewMessageToCache) {
+
+			} else if (msg.getCommand() == ChatMessageCommands.NewMessageToCache) {
+				// TODO: write to file
+				// check if writen to file
+				// Delete from list
+				// send response to Leader
+
 			}
+		}
 	}
 
-
 	public ChatMessage manageMessage(ChatMessage msg) {
-		if(role == 2) {
+		if (role == 2) {
 			LogReplication(msg);
-		}else {
+		} else {
 			Client leader = this.sender.getLeader();
-			this.sender.sendMessage(msg,leader.getIp(), leader.getPort(), ChatMessageCommands.NewMessageForwardedToLeader);
+			this.sender.sendMessage(msg, leader.getIp(), leader.getPort(),
+					ChatMessageCommands.NewMessageForwardedToLeader);
 		}
 		return msg;
 	}
@@ -82,17 +90,20 @@ public class Raft implements Runnable {
 		restartElectionTimeout();
 	}
 
-	private void startRaft() {
-
-	}
-
 	private long votingCycle() {
 		int random = (ThreadLocalRandom.current().nextInt(10, 150) + 150);
 		return Long.valueOf(random);
 	}
 
 	private void becomeCanidate() {
-
+		role = 1;
+		// Vote for myself 
+		didVote = true;
+		term = term +1;
+		int Votes = 1;
+		
+		// send message Vote for Me
+		
 	}
 
 	public void voteLeader() {
