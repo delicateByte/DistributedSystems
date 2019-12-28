@@ -7,6 +7,7 @@ public class Client  {
        private int port;
        private String name;
        private  int rights;
+       
        public Client(String ip, int port) {
     	   this.ip = ip;
     	   this.port = port;
