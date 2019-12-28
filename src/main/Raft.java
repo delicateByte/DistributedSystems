@@ -6,7 +6,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
-import files.FileSyncManager;
+import storage.FileSyncManager;
 
 public class Raft implements Runnable {
 	

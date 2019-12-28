@@ -3,7 +3,7 @@ package main;
 import java.util.ArrayList;
 import java.util.List;
 
-import files.FileSyncManager;
+import storage.FileSyncManager;
 
 public class Main {
 

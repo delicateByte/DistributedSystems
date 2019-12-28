@@ -7,8 +7,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import files.FileSyncManager;
 import main.ChatMessage;
+import storage.FileSyncManager;
 
 class FileSyncTests {
 
