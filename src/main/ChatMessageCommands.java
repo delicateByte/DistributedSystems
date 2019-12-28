@@ -5,6 +5,7 @@ public enum ChatMessageCommands {
 	NewMessageForwardedToLeader,
 	NewMessageToCache,
 	MessageCached,
-	WriteMessage
-	
+	WriteMessage,
+	Vote,
+	RequestVoteForMe
 }
