@@ -40,7 +40,7 @@ public class Sender implements Runnable {
 		}
     }
 
-    public String sendMessage(ChatMessage msg,String ip, int port, ChatMessageCommands Command ) {
+    public String sendMessage(ChatMessage msg,String ip, int port, MessageType Command ) {
         out.println(msg);
         String resp = "error";
 		try {
@@ -53,7 +53,7 @@ public class Sender implements Runnable {
     }
 
     // return something
-    public String sendMessageToAllNodes(ChatMessage msg, ChatMessageCommands cmd) {
+    public String sendMessageToAllNodes(ChatMessage msg, MessageType cmd) {
     	return "TEMPLATE";
     }
     public void stopConnection() {

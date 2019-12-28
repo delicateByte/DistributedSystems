@@ -1,6 +1,6 @@
 package main;
 
-public enum ChatMessageCommands {
+public enum MessageType {
 	Heartbeat,
 	NewMessageForwardedToLeader,
 	NewMessageToCache,
