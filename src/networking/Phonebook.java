@@ -46,7 +46,9 @@ public class Phonebook {
 	public void deactivateClient() {
 
 	}
+	public void deactivateLeader() {
 
+	}
 	public ArrayList<Client> getFullPhonebook() {
 
 		return this.phonebook;
