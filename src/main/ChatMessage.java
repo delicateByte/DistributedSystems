@@ -7,12 +7,13 @@ public class ChatMessage {
 	int id;
 	ChatMessageCommands command;
 	
-	
-	public ChatMessage(int id, String text, String sender) {
+	// was ist ID, Was ist sender ?
+	public ChatMessage(int id, String text, String sender, ChatMessageCommands cmd) {
 		super();
 		this.text = text;
 		this.sender = sender;
 		this.id = id;
+		this.command = cmd;
 	}
 	
 	public String getText() {
