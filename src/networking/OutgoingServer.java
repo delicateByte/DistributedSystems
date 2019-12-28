@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import main.Client;
 import main.Message;
 import main.MessageType;
 
@@ -19,11 +20,9 @@ public class OutgoingServer {
 	 * @return returns if sending was error free (no confirmation if 
 	 * the message was delivered successfully). 
 	 */
-	public boolean sendMessage(Message message, String recipient) {
-		String ip = recipient.split("-")[0];
-		int port = Integer.parseInt(recipient.split("-")[1]);
+	public boolean sendMessage(Message message, Client client) {;
 		try {
-			Socket socket = new Socket(ip, port);
+			Socket socket = new Socket(client.getIp(), client.getPort());
 			PrintWriter pw = new PrintWriter(socket.getOutputStream());
 			pw.write(message.getSender() + ";" + message.getPayload() + ";" + message.getType().name());
 			pw.flush();

@@ -2,10 +2,10 @@ package main;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
-
 import networking.NetworkListener;
 import networking.OutgoingServer;
 import storage.FileSyncManager;
@@ -28,10 +28,11 @@ public class Raft implements Runnable, NetworkListener {
 				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10))); // TODO: is time to short ?
 			} catch (Exception e) {
 
+			}if(role==1) {
+				resetVote();
 			}
-			if (sender.getLeader() == null) {
 				becomeCanidate();
-			}
+			//TODO:	setLeaderNotActive();
 		}
 
 	};
@@ -39,13 +40,38 @@ public class Raft implements Runnable, NetworkListener {
 	// Utilities
 	private OutgoingServer sender;
 	private FileSyncManager fileWriter;
-
+	
+	// Contacts table
+	private ArrayList<Client> phonebook = new ArrayList<Client>();
 	// Raft Thread Constructor
 	public Raft() {
 		sender = new OutgoingServer();
 		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
 	}
 
+	public Client getLeader() {
+		Iterator<Client> itrClient = phonebook.iterator();
+		Client leader = null;
+		while (itrClient.hasNext()) {
+			if (itrClient.next().getRights() == 2) {
+				System.out.println(itrClient.next());
+				leader = itrClient.next();
+			}else {
+				//TODO: HOW HANDLE IF NO LEADER IS FOUND AT A POINT IN TIME 
+			}
+		}
+		return leader;
+		
+	}
+	// after Recieving a I am Your Leader MEssage
+	public void newLeaderChosen() {
+		
+	}
+	
+	// add a new Client named Clint to the phonebook
+	public void addNewClientToPhonebook(Client clint) {
+		
+	}
 	public void LogReplication(Message msg) {
 		if (role == 2) {
 			// chache Message
@@ -70,9 +96,8 @@ public class Raft implements Runnable, NetworkListener {
 		if (role == 2) {
 			LogReplication(msg);
 		} else {
-			Client leader = this.sender.getLeader();
-			//TODO: bei der Stelle weiﬂ ich nicht ganz wie ich das am besten w‰re
-			this.sender.sendMessage(msg, leader.getIp(), leader.getPort(), MessageType.NewMessageForwardedToLeader);
+			Client leader = getLeader();
+			this.sender.sendMessage(msg,leader);
 		}
 		return msg;
 	}
@@ -83,7 +108,11 @@ public class Raft implements Runnable, NetworkListener {
 		electionTimeout = new Timer("Raftcycle-" + cycle);
 		electionTimeout.schedule(raftCycleManager, 10);
 	}
-
+	public void resetVote() {
+		role =1;
+		didVote=false;
+	}
+	
 	public void hearthbeatResetElectionTimout() {
 		restartElectionTimeout();
 	}
@@ -95,8 +124,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	private void becomeCanidate() {
 		role = 1;
-		// Vote for myself
-		didVote = true;
+		voteLeader();
 		term = term + 1;
 		int votes = 1;
 		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I hate the AfD",
@@ -104,7 +132,10 @@ public class Raft implements Runnable, NetworkListener {
 		sender.broadcastMessage(voteForMeMessage);
 
 		// Check if responses are in
-
+		votes = 0;
+		// TODO: if (votes < (sender.countActiveNodesInCurrentNetwork() / 2)) {
+		//
+		//}
 	}
 
 	public void voteLeader() {
@@ -118,7 +149,9 @@ public class Raft implements Runnable, NetworkListener {
 		didVote = false;
 		term = term + 1;
 	}
-
+	public void initialJoin() {
+		
+	}
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub

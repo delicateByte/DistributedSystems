@@ -8,5 +8,8 @@ public enum MessageType {
 	WriteMessage,
 	Vote,
 	RequestVoteForMe,
-	AlreadyVoted
+	AlreadyVoted,
+	IamTheSenat, //New Leader sends to all this that they add them as new leader
+	RequestFullMessageHistoryFromAnotherNode,
+	RequestActiveClientsListFromAnotherNode
 }
