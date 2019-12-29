@@ -58,6 +58,7 @@ public class Main {
 			me.setPort(port);
 			Phonebook.addNewNode(me);
 			Phonebook.addNewNode(leader);
+			Phonebook.newLeader(leader);
 			
 			IncomingServer in = new IncomingServer(port);
 			ClientConnector cc = new ClientConnector(me, sender);

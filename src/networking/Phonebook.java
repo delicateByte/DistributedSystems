@@ -2,6 +2,7 @@ package networking;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import main.Client;
 
@@ -99,10 +100,37 @@ public class Phonebook {
 	}
 	
 	//return final merged Phonebook
-	public static ArrayList<Client> mergeTwoPhonebooks(ArrayList<Client> pb1,ArrayList<Client> pb2) {
+	public static ArrayList<Client> mergeTwoPhonebooks(List<Client> pb1,List<Client> pb2) {
 		pb1.addAll(pb2);
 		return pb1;
 	}
 	
+	public static String exportPhonebook() {
+		List<String> teilStrings = new ArrayList<String>();
+		
+		for(Client c : phonebook) {
+			List<String>teilTeilStrings = new ArrayList<String>();
+			teilTeilStrings.add(c.getIp());
+			teilTeilStrings.add(""+c.getPort());
+			teilTeilStrings.add(""+c.getRights());
+			teilTeilStrings.add(c.getName().replace(";", "\\;").replace("-", "\\-"));
+			teilStrings.add(String.join(";", teilTeilStrings));
+		}
+		
+		return String.join("-", teilStrings);
+	}
+	
+	public static void importPhonebook(String impString) {
+		String[] teilStrings = impString.split("(?<!\\\\)-");
+		List<Client> newPhonebook = new ArrayList<Client>();
+		for(String teilString : teilStrings) {
+			String[] clientInfos = teilString.split("(?<!\\\\);");
+			Client client = new Client(clientInfos[0], Integer.parseInt(clientInfos[1]));
+			client.setRights(Integer.parseInt(clientInfos[2]));
+			client.setName(clientInfos[3].replace("\\;", ";").replace("\\-", "-"));
+			newPhonebook.add(client);
+		}
+		return mergeTwoPhonebooks(phonebook, newPhonebook);
+	}
 	// function for marshal and unmarshal phonebook
 }
