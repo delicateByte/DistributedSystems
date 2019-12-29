@@ -22,7 +22,12 @@ public class ChatMessage implements Comparable<ChatMessage>{
 	public int getId() {
 		return id;
 	}
-
+	public static String chatMessageObjectToString(ChatMessage msg) {
+		return "RESULT";
+	}
+	public static ChatMessage chatMessageStringToObject(String str) {
+		return null;
+	}
 	@Override
 	public int compareTo(ChatMessage otherMessage) {
 		if(this.getId() > otherMessage.getId())
