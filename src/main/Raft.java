@@ -109,10 +109,12 @@ public class Raft implements Runnable, NetworkListener {
 	//
 	// #############################################################
 
-	public void LogReplication(Message msg) {
+	public void newMessageForwardedToLeader(Message msg) {
 		if (role == 2) {
 			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 			String payload = msg.getPayload();
+			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
+			messageResponseAggregator.put(extractId.getId(),0); // Adds new Key-value pair to the map that checks how many responses for a message have arrived
 			Message cacheMessage = new Message(thisClient,payload,MessageType.NewMessageToCache);
 			q.offer(cacheMessage);
 			//sender.broadcastMessage(cacheMessage);
@@ -120,17 +122,9 @@ public class Raft implements Runnable, NetworkListener {
 			newTask.setComparePayloads(msg.getPayload());
 			addBroadcastResponseTask(newTask);
 		} else {
-			if (msg.getType() == MessageType.NewMessageToCache) {
-
-			} else if (msg.getType() == MessageType.NewMessageToCache) {
-				// TODO: write to file
-				// check if writen to file
-				// Delete from list
-				// send response to Leader
-
-			}
+						}
 		}
-	}
+	
 	public void gatherCacheResponses(Message msg) {
 		AwaitingResponse cmp= new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
@@ -396,6 +390,11 @@ public class Raft implements Runnable, NetworkListener {
 			gatherCacheResponses(message);
 			break;
 		case NewMessageForwardedToLeader:
+			if(role ==2) {
+				newMessageForwardedToLeader(message);
+			}else {
+				sender.sendMessage(message, Phonebook.getLeader());
+			}
 			break;
 		case NewMessageToCache:
 			break;
