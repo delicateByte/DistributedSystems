@@ -136,10 +136,14 @@ public class Raft implements Runnable, NetworkListener {
 		cmp.setComparePayloads(msg.getPayload());
 		if(taskList.contains(cmp)) {
 			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); // TODO:handle failure of this function
-			if()
+			if(true) {
+				
+			}
 		}
 	}
-	public void 
+	public void gatherWriteResponses(Message msg) {
+		
+	}
 
 	// ##############################################################
 	//
