@@ -43,7 +43,6 @@ public class Raft implements Runnable, NetworkListener {
 				resetVote();
 			}
 			phonebook.deactivateLeader();
-			becomeCanidate();
 			// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
 			// problem with the Leader and a new needs to be elected
 		}
@@ -64,9 +63,8 @@ public class Raft implements Runnable, NetworkListener {
 
 		}
 	};
-	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with
-													// Hearthbeat
-	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); //
+	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with Hearthbeat
+	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting for
 	// Utilities
 	private OutgoingServer sender;
 	private FileSyncManager fileWriter;
@@ -92,7 +90,7 @@ public class Raft implements Runnable, NetworkListener {
 		// I need to start recieving Heartbeats from Leader right away
 		// needs to be already in phonbook of leader
 		votes=0;
-		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
+		electionTimeout.scheduleAtFixedRate(raftCycleManager,2, votingCycle()); // Initial Start of Raft Cycle
 		
 	}
 
@@ -135,7 +133,7 @@ public class Raft implements Runnable, NetworkListener {
 		electionTimeout.cancel();
 		electionTimeout.purge();
 		electionTimeout = new Timer("Raftcycle-" + cycle);
-		electionTimeout.schedule(raftCycleManager, 10);
+		electionTimeout.scheduleAtFixedRate(raftCycleManager,2, votingCycle());
 	}
 
 	public void stopElectionTimeout() {
@@ -150,7 +148,7 @@ public class Raft implements Runnable, NetworkListener {
 			term = Integer.parseInt(msg.getPayload(), 10);
 			lastVote = msg.getSenderAsClient();
 			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote); // TODO: BEngin wollte sender bei
-																						// message fixen,oder ?
+																// message fixen,oder ?
 			sender.sendMessage(ballot, msg.getSenderAsClient());
 		}
 		restartElectionTimeout();
@@ -158,6 +156,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void resetVote() {
 		role = 0;
+		votes =0;
 		didVote = false;
 	}
 
@@ -231,6 +230,7 @@ public class Raft implements Runnable, NetworkListener {
 			case RequestFullMessageHistoryFromAnotherNode:
 				break;
 			case RequestVoteForMe:
+				// payload = payload that is returned with VOTE
 				break;
 			case Vote:
 				break;
@@ -269,27 +269,33 @@ public class Raft implements Runnable, NetworkListener {
 		role = 1;
 		didVote = true;
 		term = term + 1;
-		int votes = 1;
-		// TODO: set Last Vote etc to my Client
+		 votes = 1;
 		restartElectionTimeout();
-		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I hate the AfD",
+		votes = 1;
+		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I am better the AfD-N0de",
 				MessageType.RequestVoteForMe);
 		sender.broadcastMessage(voteForMeMessage);
+	}
 
-		// TODO: Check if responses are in
-		votes = 1;
-		if (phonebook.countPhonebookEntries() == 0)
-			if (votes < (phonebook.countPhonebookEntries() / 2)) {
+	private void checkVote() {
+		if (phonebook.countPhonebookEntries() == 0) {
+			System.out.println("ERROR- Empty phonebook");
+		}else if (votes < (phonebook.countPhonebookEntries() / 2)) {
 				becomeLeader();
 			}
 	}
-
 	private void becomeLeader() {
-		// TODO: Node Inaugration
-		// init Tasklist
-		// start Heatbeat Timer
-		// send Heartbeat
-		// send I AM THE SENATE Message
+		taskList.clear();
+		stopElectionTimeout();
+		heartbeatTimer = new Timer("Heartbeat-" + term);
+		heartbeatTimer.scheduleAtFixedRate(heartbeat,2,35);
+		Message IAmTheSenate = new Message(thisClient,term+"-"+this.thisClient+"-"+"Leader", MessageType.IAmTheSenat);
+		sender.broadcastMessage(IAmTheSenate);
+		
+	}
+	public void stopHeartbeat() {
+		heartbeatTimer.cancel();
+		heartbeatTimer.purge();
 	}
 
 	// ##############################################################
@@ -305,6 +311,9 @@ public class Raft implements Runnable, NetworkListener {
 		case AlreadyVoted:
 			break;
 		case Heartbeat:
+			if(role !=2) {
+				restartElectionTimeout();
+			}
 			break;
 		case MessageCached:
 			break;
