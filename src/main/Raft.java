@@ -71,13 +71,13 @@ public class Raft implements Runnable, NetworkListener {
 	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with
 													// Hearthbeat
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
-	private Map<Integer,Integer> messageResponseAggregator = new HashMap<Integer,Integer>();
+	private Map<Integer, Integer> messageResponseAggregator = new HashMap<Integer, Integer>();
 	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting
-	private boolean newMessage; 																	// for
+	private boolean newMessage; // for
 	// Utilities
 	private MessageSender sender;
 	private FileSyncManager fileWriter;
-	
+
 	// ##############################################################
 	//
 	// --------------- MAIN RAFT IMPLEMENTAION ----------------------------
@@ -111,47 +111,108 @@ public class Raft implements Runnable, NetworkListener {
 	// #############################################################
 
 	public void newMessageForwardedToLeader(Message msg) {
-		if (role == 2 && newMessage) {
-			newMessage=false;
+		int id =ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
+		int idPipeline;
+		boolean pipelineEmpty;
+		if(!messageCache.isEmpty()){
+			 idPipeline = messageCache.get(0).getId();
+			 pipelineEmpty =false;
+		}else {
+			 pipelineEmpty =true;
+			 idPipeline = 0;
+		}
+		if (role == 2 && newMessage && !pipelineEmpty && id<idPipeline ||role == 2 && newMessage && pipelineEmpty ) {
+			newMessage = false;
 			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 			String payload = msg.getPayload();
 			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
-			messageResponseAggregator.put(extractId.getId(),0); // Adds new Key-value pair to the map that checks how many responses for a message have arrived
-			Message cacheMessage = new Message(thisClient,payload,MessageType.NewMessageToCache);
+			messageResponseAggregator.put(extractId.getId(), 0); // Adds new Key-value pair to the map that checks how
+																	// many responses for a message have arrived
+			Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
 			q.offer(cacheMessage);
-			//sender.broadcastMessage(cacheMessage);
-			AwaitingResponse newTask= new AwaitingResponse(thisClient, MessageType.MessageCached);
+			// sender.broadcastMessage(cacheMessage);
+			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
 			newTask.setComparePayloads(msg.getPayload());
 			addBroadcastResponseTask(newTask);
-		} else if(role == 2 && !newMessage){
-			//TODO:asadfa
-						}
+		} else if (role == 2 && !newMessage) {
+			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+			String payload = msg.getPayload();
+			ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
+			messageResponseAggregator.put(extractId.getId(), 0);
+		}else if(role==2 && newMessage && !pipelineEmpty && id>idPipeline) {
+			newMessage = false;
+			String payload = msg.getPayload();
+			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
+			Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
+			q.offer(cacheMessage);
+			// sender.broadcastMessage(cacheMessage);
+			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
+			newTask.setComparePayloads(msg.getPayload());
+			addBroadcastResponseTask(newTask);
 		}
-	
+	}
+	public void checkIfMessageInPipline() {
+		if(newMessage && !messageCache.isEmpty()) {
+			newMessage=false;
+			ChatMessage payload = messageCache.get(0);
+			Message cacheMessage = new Message(thisClient, ChatMessage.chatMessageObjectToString(payload), MessageType.NewMessageToCache);
+			q.offer(cacheMessage);
+			// sender.broadcastMessage(cacheMessage);
+			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
+			newTask.setComparePayloads(ChatMessage.chatMessageObjectToString(payload));
+			addBroadcastResponseTask(newTask);
+		}
+	}
 	public void gatherCacheResponses(Message msg) {
-		AwaitingResponse cmp= new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
+		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
-		if(taskList.contains(cmp)) {
-			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); // TODO:handle failure of this function
-			int msgId= ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
-			if(messageResponseAggregator.containsKey(msgId)) {
-				messageResponseAggregator.put(msgId,messageResponseAggregator.get(msgId)+1);
-				if(messageResponseAggregator.get(msgId)>(Phonebook.countPhonebookEntries()/2)) {
-					Message writeMessage = new Message(thisClient,msg.getPayload(),MessageType.WriteMessage);
-					AwaitingResponse newTask= new AwaitingResponse(thisClient, MessageType.MessageWritten);
+		if (taskList.contains(cmp)) {
+			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); // TODO:handle failure of this
+																							// function
+			int msgId = ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
+			if (messageResponseAggregator.containsKey(msgId)) {
+				messageResponseAggregator.put(msgId, messageResponseAggregator.get(msgId) + 1);
+				if (messageResponseAggregator.get(msgId) > (Phonebook.countPhonebookEntries() / 2)) {
+					Message writeMessage = new Message(thisClient, msg.getPayload(), MessageType.WriteMessage);
+					AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageWritten);
 					newTask.setComparePayloads(msg.getPayload());
 					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
+					for(ChatMessage m : messageCache) {
+						if(m.getId() == ChatMessage.chatMessageStringToObject(msg.getPayload()).getId()) {
+							messageCache.remove(m);
+						}
+					}
 					addBroadcastResponseTask(newTask);
 					q.offer(writeMessage);
-					newMessage=true;
+					newMessage = true;
 				}
 			}
 		}
 	}
+	
+
 	public void gatherWriteResponses(Message msg) {
 		
 	}
 
+	public void cacheTheMessage(Message msg) {
+		messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+		Message response = new Message(thisClient,msg.getPayload(),MessageType.MessageCached);
+		sender.sendMessage(response, Phonebook.getLeader());
+	}
+	public void writeTheMesssage(Message msg) {
+		ChatMessage extract=ChatMessage.chatMessageStringToObject(msg.getPayload());
+		FileSyncManager.addMessage(extract);
+		for(ChatMessage m : messageCache) {
+			if(m.getId() == extract.getId()) {
+				messageCache.remove(m);
+			}
+		}
+		FileSyncManager.save(thisClient.getIp()+"-"+thisClient.getPort());
+		Message response = new Message(thisClient,msg.getPayload(),MessageType.MessageWritten);
+		sender.sendMessage(response, Phonebook.getLeader());
+	}
 	// ##############################################################
 	//
 	// --------------- Voting ----------------------------
@@ -165,7 +226,7 @@ public class Raft implements Runnable, NetworkListener {
 		stopElectionTimeout();
 		TimerTask raftCycleReset = new TimerTask() {
 			public void run() {
-				//System.out.println("started TimerTask");
+				// System.out.println("started TimerTask");
 				try {
 					Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10)));
 				} catch (Exception e) {
@@ -174,15 +235,17 @@ public class Raft implements Runnable, NetworkListener {
 				if (role == 0) {
 					resetVote();
 					becomeCanidate();
-				}}};
+				}
+			}
+		};
 		electionTimeout = new Timer("Raftcycle-" + cycle);
-		System.out.println("New Timer"+"Raftcycle-" + cycle);
+		System.out.println("New Timer" + "Raftcycle-" + cycle);
 		electionTimeout.scheduleAtFixedRate(raftCycleReset, 0, votingCycle());
 	}
 
 	public void stopElectionTimeout() {
 		electionTimeout.cancel();
-		cycle=cycle+1;
+		cycle = cycle + 1;
 	}
 
 	public void voteLeader(Message msg) {
@@ -247,11 +310,12 @@ public class Raft implements Runnable, NetworkListener {
 			}
 		}
 	}
-	private void findAndDeleteTask(Client clnt, MessageType type,String payload) {
+
+	private void findAndDeleteTask(Client clnt, MessageType type, String payload) {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			if (task.getResponder() == clnt && task.getType() == type && task.getComparePayloads()==payload) {
+			if (task.getResponder() == clnt && task.getType() == type && task.getComparePayloads() == payload) {
 				itrTaskList.remove();
 			} else {
 				System.out.println("ERROR- No Task like that");
@@ -266,13 +330,14 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	private void heartbeat() {
+		checkIfMessageInPipline();
 		if (q.isEmpty()) {
 			sendNormalHeartbeat();
 		} else {
 			Message nextMessage = q.poll();
-			if(nextMessage.getSenderAsClient() ==thisClient) {
+			if (nextMessage.getSenderAsClient() == thisClient) {
 				// broadcasts
-			}else {
+			} else {
 				// single sends
 			}
 			switch (nextMessage.getType()) {
@@ -366,7 +431,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	private void becomeLeader() {
 		System.out.println("Elected Leader");
-		role=2;
+		role = 2;
 		taskList.clear();
 		stopElectionTimeout();
 		Phonebook.newLeader(thisClient);
@@ -404,9 +469,9 @@ public class Raft implements Runnable, NetworkListener {
 			gatherCacheResponses(message);
 			break;
 		case NewMessageForwardedToLeader:
-			if(role ==2) {
+			if (role == 2) {
 				newMessageForwardedToLeader(message);
-			}else {
+			} else {
 				sender.sendMessage(message, Phonebook.getLeader());
 			}
 			break;
