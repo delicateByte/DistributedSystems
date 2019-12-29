@@ -28,8 +28,8 @@ public class Main {
         	Phonebook.addNewNode(me);
         	
         	//raft
-//        	Raft myRaft = new Raft();
-//        	Thread raftThread = new Thread(myRaft);
+        	Raft myRaft = new Raft(me);
+        	Thread raftThread = new Thread(myRaft);
         	
         	//networking
         	IncomingServer in = new IncomingServer(me.getPort());
@@ -39,7 +39,7 @@ public class Main {
         	
         	System.out.println("Initalized network with me as only participant.");
         	System.out.println("Join Me: " + me.getIp() + " " + me.getPort());
-//        	raftThread.start();
+        	raftThread.start();
         } else if(args.length == 2) {
         	Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[1]));
         	Client friend = new Client(args[0], Integer.parseInt(args[1]));

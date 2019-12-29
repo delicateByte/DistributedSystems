@@ -17,6 +17,7 @@ import storage.FileSyncManager;
 //TODO: Two Leader = leader with Higher term takes it & Merge Client Lists 
 //TODO: Task List with all open Tasks
 // TODO: Filewrite 
+//TODO: Phonebook snyc 
 public class Raft implements Runnable, NetworkListener {
 
 	// Raft specific
@@ -28,21 +29,23 @@ public class Raft implements Runnable, NetworkListener {
 	private Client lastVote;
 	private Phonebook phonebook = new Phonebook();
 	private Client thisClient; // TODO: Bengin how can i get tis info
-	// Raft specific Aggregation Functions 
+	// Raft specific Aggregation Functions
 	private int votes;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
 	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
+			System.out.println("started TimerTask");
 			try {
 				Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10)));
 			} catch (Exception e) {
 
 			}
-			if (role == 1) {
+			if (role == 0) {
 				resetVote();
+				becomeCanidate();
 			}
-			phonebook.deactivateLeader();
+			// TODO: phonebook.deactivateLeader();
 			// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
 			// problem with the Leader and a new needs to be elected
 		}
@@ -52,9 +55,9 @@ public class Raft implements Runnable, NetworkListener {
 	Timer heartbeatTimer = new Timer("Heartbeat");
 	TimerTask heartbeat = new TimerTask() {
 		public void run() {
-			if (role == 2) {
+			System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
+			if (role != 2) {
 				heartbeatTimer.cancel();
-				heartbeatTimer.purge();
 			}
 			// task list is accessed with every new Message manageTasklist();
 			heartbeat();
@@ -63,8 +66,10 @@ public class Raft implements Runnable, NetworkListener {
 
 		}
 	};
-	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with Hearthbeat
-	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting for
+	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with
+													// Hearthbeat
+	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting
+																				// for
 	// Utilities
 	private MessageSender sender;
 	private FileSyncManager fileWriter;
@@ -74,11 +79,11 @@ public class Raft implements Runnable, NetworkListener {
 	// --------------- MAIN RAFT IMPLEMENTAION ----------------------------
 	//
 	// #############################################################
-	public Raft() {
+	public Raft(Client me) {
 		sender = new MessageSender();
-
+		thisClient = me;
 	}
-	
+
 	// EMPTY
 	public void initialJoin() {
 
@@ -89,9 +94,9 @@ public class Raft implements Runnable, NetworkListener {
 		// Phonebook needs me already as an entry
 		// I need to start recieving Heartbeats from Leader right away
 		// needs to be already in phonbook of leader
-		votes=0;
-		electionTimeout.scheduleAtFixedRate(raftCycleManager,2, votingCycle()); // Initial Start of Raft Cycle
-		
+		votes = 0;
+		electionTimeout.scheduleAtFixedRate(raftCycleManager, 2, votingCycle()); // Initial Start of Raft Cycle
+		System.out.println("Started Raft");
 	}
 
 	// ##############################################################
@@ -130,15 +135,27 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	public void restartElectionTimeout() {
-		electionTimeout.cancel();
-		electionTimeout.purge();
+		stopElectionTimeout();
+		TimerTask raftCycleReset = new TimerTask() {
+			public void run() {
+				//System.out.println("started TimerTask");
+				try {
+					Thread.sleep(Long.valueOf(ThreadLocalRandom.current().nextInt(1, 10)));
+				} catch (Exception e) {
+
+				}
+				if (role == 0) {
+					resetVote();
+					becomeCanidate();
+				}}};
 		electionTimeout = new Timer("Raftcycle-" + cycle);
-		electionTimeout.scheduleAtFixedRate(raftCycleManager,2, votingCycle());
+		System.out.println("New Timer"+"Raftcycle-" + cycle);
+		electionTimeout.scheduleAtFixedRate(raftCycleReset, 0, votingCycle());
 	}
 
 	public void stopElectionTimeout() {
 		electionTimeout.cancel();
-		electionTimeout.purge();
+		cycle=cycle+1;
 	}
 
 	public void voteLeader(Message msg) {
@@ -148,7 +165,7 @@ public class Raft implements Runnable, NetworkListener {
 			term = Integer.parseInt(msg.getPayload(), 10);
 			lastVote = msg.getSenderAsClient();
 			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote); // TODO: BEngin wollte sender bei
-																// message fixen,oder ?
+			// message fixen,oder ?
 			sender.sendMessage(ballot, msg.getSenderAsClient());
 		}
 		restartElectionTimeout();
@@ -156,7 +173,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void resetVote() {
 		role = 0;
-		votes =0;
+		votes = 0;
 		didVote = false;
 	}
 
@@ -172,17 +189,20 @@ public class Raft implements Runnable, NetworkListener {
 	// #############################################################
 
 	private void manageTasklist() {
-		
+
 	}
+
 	private void addTask(AwaitingResponse task) {
 		taskList.add(task);
 	}
+
 	private void addBroadcastResponseTask(AwaitingResponse task) {
-		for(Client c : phonebook.getFullPhonebook()) {
+		for (Client c : phonebook.getFullPhonebook()) {
 			task.setResponder(c);
 			addTask(task);
 		}
 	}
+
 	private void findAndDeleteTask(Client clnt, MessageType type) {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
 		while (itrTaskList.hasNext()) {
@@ -202,20 +222,20 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	private void heartbeat() {
-		if(q.isEmpty()) {
+		if (q.isEmpty()) {
 			sendNormalHeartbeat();
-		}else {
+		} else {
 			Message nextMessage = q.poll();
-			switch(nextMessage.getType()) {
+			switch (nextMessage.getType()) {
 			case AlreadyVoted:
 				// Do nothing
 				// delete TAsk
 				break;
 			case Heartbeat:
-				//  TODO: Two LeaderS Problem should not occur
+				// TODO: Two LeaderS Problem should not occur
 				break;
 			case IAmTheSenat:
-				
+
 				break;
 			case MessageCached:
 				break;
@@ -244,13 +264,14 @@ public class Raft implements Runnable, NetworkListener {
 				break;
 			default:
 				break;
-			
+
 			}
 		}
 	}
+
 	public void sendNormalHeartbeat() {
-		String payload ="test";
-		Message heartbeat = new Message(phonebook.getLeader(),payload,MessageType.Heartbeat);
+		String payload = "test";
+		Message heartbeat = new Message(thisClient, payload, MessageType.Heartbeat);
 		sender.broadcastMessage(heartbeat);
 	}
 	// ##############################################################
@@ -269,33 +290,47 @@ public class Raft implements Runnable, NetworkListener {
 		role = 1;
 		didVote = true;
 		term = term + 1;
-		 votes = 1;
-		restartElectionTimeout();
 		votes = 1;
-		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I am better the AfD-N0de",
-				MessageType.RequestVoteForMe);
+//		System.out.println("Voted for ME");
+		checkVote();
+		Message voteForMeMessage = new Message("192.168.178.51-3538",
+				"Vote for me I am the best and I am better the AfD-N0de", MessageType.RequestVoteForMe);
 		sender.broadcastMessage(voteForMeMessage);
+		restartElectionTimeout();
+
 	}
 
 	private void checkVote() {
-		if (phonebook.countPhonebookEntries() == 0) {
+		System.out.println("Check Vote");
+		if (Phonebook.countPhonebookEntries() == 0) {
 			System.out.println("ERROR- Empty phonebook");
-		}else if (votes < (phonebook.countPhonebookEntries() / 2)) {
+		} else {
+			if (votes > (Phonebook.countPhonebookEntries() / 2)) {
+				System.out.println("Majority Reached");
 				becomeLeader();
 			}
+			System.out.println(votes + "(votes) VS (nodes)" + (Phonebook.countPhonebookEntries() / 2));
+
+		}
+
 	}
+
 	private void becomeLeader() {
+		System.out.println("Elected Leader");
+		role=2;
 		taskList.clear();
 		stopElectionTimeout();
+		Phonebook.newLeader(thisClient);
 		heartbeatTimer = new Timer("Heartbeat-" + term);
-		heartbeatTimer.scheduleAtFixedRate(heartbeat,2,35);
-		Message IAmTheSenate = new Message(thisClient,term+"-"+this.thisClient+"-"+"Leader", MessageType.IAmTheSenat);
+		heartbeatTimer.scheduleAtFixedRate(heartbeat, 2, 35);
+		Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient + "-" + "Leader",
+				MessageType.IAmTheSenat);
 		sender.broadcastMessage(IAmTheSenate);
-		
+
 	}
+
 	public void stopHeartbeat() {
 		heartbeatTimer.cancel();
-		heartbeatTimer.purge();
 	}
 
 	// ##############################################################
@@ -311,7 +346,7 @@ public class Raft implements Runnable, NetworkListener {
 		case AlreadyVoted:
 			break;
 		case Heartbeat:
-			if(role !=2) {
+			if (role != 2) {
 				restartElectionTimeout();
 			}
 			break;
