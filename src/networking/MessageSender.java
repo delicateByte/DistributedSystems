@@ -26,7 +26,7 @@ public class MessageSender {
 			Socket socket = new Socket(client.getIp(), client.getPort());
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter pw = new PrintWriter(socket.getOutputStream());
-			pw.write(message.getSender() + ";" + message.getPayload() + ";" + message.getType().name() + "\n");
+			pw.write(message.getSender() + ";" + message.getPayload().replace(";", "\\;") + ";" + message.getType().name() + "\n");
 			pw.flush();
 			String response = br.readLine();
 			br.close();

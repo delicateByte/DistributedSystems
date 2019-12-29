@@ -86,9 +86,7 @@ public class FileSyncManager {
 			List<String> strings = new ArrayList<String>();
 			String messageString = "";
 			for(ChatMessage message : messages) {
-				messageString = 	message.getId() + ";"
-						+	message.getSender().replace(";", "\\;") + ";" 
-						+ 	message.getText().replace(";", "\\;") + "";
+				messageString = ChatMessage.chatMessageObjectToString(message);
 				strings.add(messageString.replace("-", "\\-"));
 			}
 			bw.write(String.join("-", strings));
@@ -114,12 +112,7 @@ public class FileSyncManager {
 			
 			for(String messageString : messageStrings) {
 				messageString = messageString.replace("\\-", "-");
-				String[] messageMeta = messageString.split("(?<!\\\\);");
-				// escapes are in the messageMeta \; 
-				ChatMessage message = new ChatMessage(Integer.parseInt(messageMeta[0]), 
-						messageMeta[2].replace("\\;", ";"), 
-						messageMeta[1].replace("\\;", ";"));
-				messages.add(message);
+				messages.add(ChatMessage.chatMessageStringToObject(messageString));
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
