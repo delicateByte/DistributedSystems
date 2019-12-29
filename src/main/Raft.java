@@ -111,7 +111,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void LogReplication(Message msg) {
 		if (role == 2) {
-			messageCache.add(msg);
+			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 			String payload = msg.getPayload();
 			Message cacheMessage = new Message(thisClient,payload,MessageType.NewMessageToCache);
 			q.offer(cacheMessage);
