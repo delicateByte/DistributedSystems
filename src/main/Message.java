@@ -11,11 +11,17 @@ public class Message {
 		this.type = type;
 	}
 	
+	public Message(Client sender, String payload, MessageType type) {
+		this.sender = sender.getIp() + "-" + sender.getPort();
+		this.payload = payload;
+		this.type = type;
+	}
+	
 	public String getSender() {
 		return sender;
 	}
 	public Client getSenderAsClient() {
-		return new Client("aas", 1);   //   <-------------------------bengin could you do that please
+		return new Client(sender.split("-")[0], Integer.parseInt(sender.split("-")[1]));
 	}
 	public String getPayload() {
 		return payload;
