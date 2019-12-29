@@ -1,28 +1,27 @@
 package networking;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 import main.Message;
 import main.MessageType;
 
 public class IncomingServer {
-	private String ip;
 	private int port;
-	private NetworkListener listener;
+	private List<NetworkListener> listeners;
 	
 	/**
 	 * starts an incomingserver for the raft node
 	 * @param identifier the id in this form: 192.168.178.51-3538
 	 * (ip + "-" + port)
 	 */
-	public IncomingServer(String identifier) {
-		this.ip = identifier.split("-")[0];
-		this.port = Integer.parseInt(identifier.split("-")[1]);
+	public IncomingServer(int port) {
+		listeners = new ArrayList<NetworkListener>();
 		
 		try {
 			ServerSocket ss = new ServerSocket(port);
@@ -36,13 +35,15 @@ public class IncomingServer {
 							BufferedReader inFromClient =
 									    new BufferedReader(new InputStreamReader(connector.getInputStream()));
 							String messageString = inFromClient.readLine();
-							if(listener != null) {
+							if(listeners.size() != 0) {
 								String[] infos = messageString.split("(?<!\\\\);");
 								Message message = new Message(
 										infos[0],
 										infos[1].replace("\\;", ";"),
 										MessageType.valueOf(infos[2]));
-								listener.onMessageReceived(message);
+								for(NetworkListener l : listeners) {
+									l.onMessageReceived(message);
+								}
 							}
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -58,15 +59,9 @@ public class IncomingServer {
 	}
 	
 	public void registerListener(NetworkListener listener) {
-		this.listener = listener;
+		listeners.add(listener);
 	}
 	
-	public String getIp() {
-		return ip;
-	}
-	public void setIp(String ip) {
-		this.ip = ip;
-	}
 	public int getPort() {
 		return port;
 	}

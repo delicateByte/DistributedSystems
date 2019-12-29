@@ -11,7 +11,7 @@ import main.MessageType;
 import networking.IncomingServer;
 import networking.NetworkListener;
 import networking.OutgoingServer;
-import util.MessageUtil;
+import util.MessageUtils;
 
 public class NetworkingTests implements NetworkListener {
 
@@ -22,7 +22,7 @@ public class NetworkingTests implements NetworkListener {
 	void testSendAndReceive() {
 		Message message = new Message("192.168.178.51-3504", "test", MessageType.WriteMessage);
 		msg = message;
-		MessageUtil.printMessage(msg);
+		MessageUtils.printMessage(msg);
 		
 		IncomingServer in = new IncomingServer("192.168.178.51-3503");
 		in.registerListener(this);
@@ -48,7 +48,7 @@ public class NetworkingTests implements NetworkListener {
 				message.getPayload().equals(msg.getPayload()) &&
 				message.getType() == msg.getType()) {
 			everythingOkay = true;
-			MessageUtil.printMessage(message);
+			MessageUtils.printMessage(message);
 		}
 	}
 }

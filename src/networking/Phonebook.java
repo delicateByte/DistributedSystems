@@ -77,11 +77,17 @@ public class Phonebook {
 	}
 	
 	public static void deactivateLeader() {
-		getLeader().setActive(false);
+		Client leader = getLeader();
+		if(leader!= null) {
+			getLeader().setActive(false);
+		}
 	}
 	
 	public static void activateLeader() {
-		getLeader().setActive(true);
+		Client leader = getLeader();
+		if(leader!= null) {
+			getLeader().setActive(true);
+		}
 	}
 	
 	public static ArrayList<Client> getFullPhonebook() {

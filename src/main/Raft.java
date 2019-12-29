@@ -53,6 +53,7 @@ public class Raft implements Runnable, NetworkListener {
 	// Raft Thread Constructor
 	public Raft() {
 		sender = new OutgoingServer();
+		
 	}
 
 	// after Recieving a I am Your Leader MEssage
