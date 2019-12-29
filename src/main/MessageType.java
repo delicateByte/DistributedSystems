@@ -14,6 +14,7 @@ public enum MessageType {
 	RequestActiveClientsListFromAnotherNode,
 	NewClientInPhonebookSyncronizeWithAllClients, //TODO: HOW TO DO THIS
 	WannaJoin,		//request from joiner to friend
-	WhichPort,	//request from joiner to leader
+	WhichPort, 	//request from joiner to leader
+	HeartbeatResponse,	
 	
 }
