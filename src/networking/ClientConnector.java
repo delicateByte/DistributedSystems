@@ -11,10 +11,10 @@ import main.MessageType;
 public class ClientConnector implements NetworkListener{
 	
 	private Client me;
-	private OutgoingServer sender;
+	private MessageSender sender;
 	private List<Client> joiners;
 	
-	public ClientConnector(Client me, OutgoingServer sender) {
+	public ClientConnector(Client me, MessageSender sender) {
 		this.me = me;
 		this.sender = sender;
 		joiners = new ArrayList<Client>();
@@ -24,15 +24,19 @@ public class ClientConnector implements NetworkListener{
 		return me;
 	}
 
-	public OutgoingServer getSender() {
+	public MessageSender getSender() {
 		return sender;
 	}
 
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
 		if(message.getType() == MessageType.WannaJoin) {
+			System.out.println("My friend is joining...");
 			Client leader = Phonebook.getLeader();
-			response.write(leader.getIp() + "-" + leader.getPort());
+			if(leader != null)
+				response.write(leader.getIp() + "-" + leader.getPort() + "\n");
+			else
+				response.write("no leader, try later\n");
 			response.flush();
 		}
 	}

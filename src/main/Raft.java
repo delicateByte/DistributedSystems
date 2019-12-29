@@ -9,8 +9,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
+import networking.MessageSender;
 import networking.NetworkListener;
-import networking.OutgoingServer;
 import networking.Phonebook;
 import storage.FileSyncManager;
 
@@ -66,7 +66,7 @@ public class Raft implements Runnable, NetworkListener {
 	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with Hearthbeat
 	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting for
 	// Utilities
-	private OutgoingServer sender;
+	private MessageSender sender;
 	private FileSyncManager fileWriter;
 
 	// ##############################################################
@@ -75,7 +75,7 @@ public class Raft implements Runnable, NetworkListener {
 	//
 	// #############################################################
 	public Raft() {
-		sender = new OutgoingServer();
+		sender = new MessageSender();
 
 	}
 	
