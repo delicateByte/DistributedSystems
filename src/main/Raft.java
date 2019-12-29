@@ -2,14 +2,15 @@ package main;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
-import networking.NetworkListener;
 import networking.MessageSender;
+import networking.NetworkListener;
 import networking.Phonebook;
 import storage.FileSyncManager;
 
@@ -26,8 +27,9 @@ public class Raft implements Runnable, NetworkListener {
 	private boolean didVote = false;
 	private Client lastVote;
 	private Phonebook phonebook = new Phonebook();
-private Client thisClient; 	//TODO: Bengin how can i get tis info
-
+	private Client thisClient; // TODO: Bengin how can i get tis info
+	// Raft specific Aggregation Functions 
+	private int votes;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
 	TimerTask raftCycleManager = new TimerTask() {
@@ -55,15 +57,16 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 				heartbeatTimer.cancel();
 				heartbeatTimer.purge();
 			}
-			manageTasklist();
+			// task list is accessed with every new Message manageTasklist();
 			heartbeat();
 			// Multiple Heartbeats in one elevtionTimeout ==> if Timer is over there is a
 			// problem with the Leader and a new needs to be elected
 
 		}
 	};
-    Queue<Message> q = new LinkedList<Message>();  //Store all Messages that need to be send out from Leader with Hearthbeat
-	ArrayList<AwaitingResponse> TaskList = new ArrayList<AwaitingResponse>(); // 
+	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with
+													// Hearthbeat
+	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); //
 	// Utilities
 	private MessageSender sender;
 	private FileSyncManager fileWriter;
@@ -75,9 +78,10 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	// #############################################################
 	public Raft() {
 		sender = new MessageSender();
-		
-	}
 
+	}
+	
+	// EMPTY
 	public void initialJoin() {
 
 	}
@@ -85,10 +89,11 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	@Override
 	public void run() {
 		// Phonebook needs me already as an entry
-		//I need to start recieving Heartbeats from Leader right away
+		// I need to start recieving Heartbeats from Leader right away
 		// needs to be already in phonbook of leader
+		votes=0;
 		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
-
+		
 	}
 
 	// ##############################################################
@@ -125,7 +130,7 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	public void hearthbeatResetElectionTimout() {
 		restartElectionTimeout();
 	}
-	// votes reset with new Vote for me request with a higher term then mine
+
 	public void restartElectionTimeout() {
 		electionTimeout.cancel();
 		electionTimeout.purge();
@@ -139,17 +144,18 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	}
 
 	public void voteLeader(Message msg) {
-		if(Integer.parseInt(msg.getPayload(),10) > term) {
+		if (Integer.parseInt(msg.getPayload(), 10) > term) {
 			resetVote();
 			didVote = true;
-			term = Integer.parseInt(msg.getPayload(),10);
+			term = Integer.parseInt(msg.getPayload(), 10);
 			lastVote = msg.getSenderAsClient();
-			Message ballot = new Message( "null",msg.getPayload(), MessageType.Vote);      // TODO: BEngin wollte sender bei message fixen,oder ?
+			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote); // TODO: BEngin wollte sender bei
+																						// message fixen,oder ?
 			sender.sendMessage(ballot, msg.getSenderAsClient());
 		}
 		restartElectionTimeout();
 	}
-	
+
 	public void resetVote() {
 		role = 0;
 		didVote = false;
@@ -167,11 +173,85 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	// #############################################################
 
 	private void manageTasklist() {
-		// check if still leader
+		
+	}
+	private void addTask(AwaitingResponse task) {
+		taskList.add(task);
+	}
+	private void addBroadcastResponseTask(AwaitingResponse task) {
+		for(Client c : phonebook.getFullPhonebook()) {
+			task.setResponder(c);
+			addTask(task);
+		}
+	}
+	private void findAndDeleteTask(Client clnt, MessageType type) {
+		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
+		while (itrTaskList.hasNext()) {
+			AwaitingResponse task = itrTaskList.next();
+			if (task.getResponder() == clnt && task.getType() == type) {
+				itrTaskList.remove();
+			} else {
+				System.out.println("ERROR- No Task like that");
+				try {
+					Thread.sleep(100000L);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
 	}
 
 	private void heartbeat() {
-		
+		if(q.isEmpty()) {
+			sendNormalHeartbeat();
+		}else {
+			Message nextMessage = q.poll();
+			switch(nextMessage.getType()) {
+			case AlreadyVoted:
+				// Do nothing
+				// delete TAsk
+				break;
+			case Heartbeat:
+				//  TODO: Two LeaderS Problem should not occur
+				break;
+			case IAmTheSenat:
+				
+				break;
+			case MessageCached:
+				break;
+			case NewClientInPhonebookSyncronizeWithAllClients:
+				break;
+			case NewMessageForwardedToLeader:
+				break;
+			case NewMessageToCache:
+				break;
+			case RequestActiveClientsListFromAnotherNode:
+				break;
+			case RequestFullMessageHistoryFromAnotherNode:
+				break;
+			case RequestVoteForMe:
+				break;
+			case Vote:
+				break;
+			case WannaJoin:
+				break;
+			case WhichPort:
+				break;
+			case WriteMessage:
+				break;
+			case HeartbeatResponse:
+				break;
+			default:
+				break;
+			
+			}
+		}
+	}
+	public void sendNormalHeartbeat() {
+		String payload ="test";
+		Message heartbeat = new Message(phonebook.getLeader(),payload,MessageType.Heartbeat);
+		sender.broadcastMessage(heartbeat);
 	}
 	// ##############################################################
 	//
@@ -187,21 +267,21 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	private void becomeCanidate() {
 		resetVote();
 		role = 1;
-		didVote=true;
+		didVote = true;
 		term = term + 1;
 		int votes = 1;
-		//TODO: set Last Vote etc to my Client
+		// TODO: set Last Vote etc to my Client
 		restartElectionTimeout();
 		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I hate the AfD",
 				MessageType.RequestVoteForMe);
 		sender.broadcastMessage(voteForMeMessage);
 
-		//TODO: Check if responses are in
+		// TODO: Check if responses are in
 		votes = 1;
-		if(phonebook.countPhonebookEntries()==0)
-		if (votes < (phonebook.countPhonebookEntries() / 2)) {
-			becomeLeader();
-		}
+		if (phonebook.countPhonebookEntries() == 0)
+			if (votes < (phonebook.countPhonebookEntries() / 2)) {
+				becomeLeader();
+			}
 	}
 
 	private void becomeLeader() {
