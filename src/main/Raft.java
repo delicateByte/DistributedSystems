@@ -130,8 +130,16 @@ public class Raft implements Runnable, NetworkListener {
 		cmp.setComparePayloads(msg.getPayload());
 		if(taskList.contains(cmp)) {
 			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); // TODO:handle failure of this function
-			if(true) {
-				
+			int msgId= ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
+			if(messageResponseAggregator.containsKey(msgId)) {
+				messageResponseAggregator.put(msgId,messageResponseAggregator.get(msgId)+1);
+				if(messageResponseAggregator.get(msgId)>(Phonebook.countPhonebookEntries()/2)) {
+					Message writeMessage = new Message(thisClient,msg.getPayload(),MessageType.WriteMessage);
+					AwaitingResponse newTask= new AwaitingResponse(thisClient, MessageType.MessageWritten);
+					newTask.setComparePayloads(msg.getPayload());
+					addBroadcastResponseTask(newTask);
+					q.offer(writeMessage);
+				}
 			}
 		}
 	}
