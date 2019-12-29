@@ -120,7 +120,7 @@ public class Phonebook {
 		return String.join("-", teilStrings);
 	}
 	
-	public static void importPhonebook(String impString) {
+	public static ArrayList<Client> importPhonebook(String impString) {
 		String[] teilStrings = impString.split("(?<!\\\\)-");
 		List<Client> newPhonebook = new ArrayList<Client>();
 		for(String teilString : teilStrings) {
