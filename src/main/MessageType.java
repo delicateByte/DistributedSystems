@@ -12,6 +12,8 @@ public enum MessageType {
 	IAmTheSenat, //New Leader sends to all this that they add them as new leader
 	RequestFullMessageHistoryFromAnotherNode,
 	RequestActiveClientsListFromAnotherNode,
-	NewClientInPhonebookSyncronizeWithAllClients //TODO: HOW TO DO THIS
+	NewClientInPhonebookSyncronizeWithAllClients, //TODO: HOW TO DO THIS
+	WannaJoin,		//request from joiner to friend
+	WhichPort,	//request from joiner to leader
 	
 }

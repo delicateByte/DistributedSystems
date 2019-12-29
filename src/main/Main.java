@@ -3,7 +3,9 @@ package main;
 import java.util.ArrayList;
 import java.util.List;
 
+import networking.ClientConnector;
 import networking.IncomingServer;
+import networking.OutgoingServer;
 import networking.Phonebook;
 import storage.FileSyncManager;
 import util.NetworkUtils;
@@ -17,20 +19,27 @@ public class Main {
 	 */
 	
     public static void main(String[] args) {
-        Thread listenerThread = new Thread( new Listener());
-        Thread senderThread = new Thread( new Sender());
+    	OutgoingServer sender = new OutgoingServer();
+        
         if(args.length == 1) {
+        	// storage and phonebook
         	FileSyncManager.initBlank();
         	Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[0]));
         	Phonebook.addNewNode(me);
-        	
+        	System.out.println(MessageType.WannaJoin.toString());
+        	//raft
         	Raft myRaft = new Raft();
         	Thread raftThread = new Thread(myRaft);
+        	
+        	//networking
         	IncomingServer in = new IncomingServer(me.getPort());
         	in.registerListener(myRaft);
+        	ClientConnector cc = new ClientConnector(me, sender);
+        	in.registerListener(cc);
+        	
         	System.out.println("Initalized network with me as only participant.");
-        	System.out.println("Join-Me: " + me.getIp() + "-" + me.getPort());
-        	raftThread.start();
+        	System.out.println("Join Me: " + me.getIp() + " " + me.getPort());
+//        	raftThread.start();
         } else if(args.length == 2) {
         	/*
     		One Joins a new Network

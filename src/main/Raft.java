@@ -1,5 +1,6 @@
 package main;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -218,7 +219,7 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	// #############################################################
 
 	@Override
-	public void onMessageReceived(Message message) {
+	public void onMessageReceived(Message message, PrintWriter response) {
 		// TODO was soll passieren wenn du eine message bekommst?
 		switch (message.getType()) {
 		case AlreadyVoted:
@@ -242,7 +243,6 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 			newLeaderChosen(message.getSenderAsClient());
 			break;
 		}
-
 	}
 
 }
