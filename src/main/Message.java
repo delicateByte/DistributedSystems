@@ -14,6 +14,9 @@ public class Message {
 	public String getSender() {
 		return sender;
 	}
+	public Client getSenderAsClient() {
+		return new Client("aas", 1);   //   <-------------------------bengin could you do that please
+	}
 	public String getPayload() {
 		return payload;
 	}
