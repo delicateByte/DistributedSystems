@@ -24,7 +24,7 @@ public class NetworkingTests implements NetworkListener {
 		msg = message;
 		MessageUtils.printMessage(msg);
 		
-		IncomingServer in = new IncomingServer("192.168.178.51-3503");
+		IncomingServer in = new IncomingServer(2504);
 		in.registerListener(this);
 		
 		OutgoingServer out = new OutgoingServer();

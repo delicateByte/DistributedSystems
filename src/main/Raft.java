@@ -1,7 +1,8 @@
 package main;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
@@ -24,6 +25,7 @@ public class Raft implements Runnable, NetworkListener {
 	private boolean didVote = false;
 	private Client lastVote;
 	private Phonebook phonebook = new Phonebook();
+private Client thisClient; 	//TODO: Bengin how can i get tis info
 
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
@@ -59,7 +61,8 @@ public class Raft implements Runnable, NetworkListener {
 
 		}
 	};
-
+    Queue<Message> q = new LinkedList<Message>();  //Store all Messages that need to be send out from Leader with Hearthbeat
+	ArrayList<AwaitingResponse> TaskList = new ArrayList<AwaitingResponse>(); // 
 	// Utilities
 	private OutgoingServer sender;
 	private FileSyncManager fileWriter;
@@ -136,15 +139,16 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void voteLeader(Message msg) {
 		if(Integer.parseInt(msg.getPayload(),10) > term) {
+			resetVote();
 			didVote = true;
 			term = Integer.parseInt(msg.getPayload(),10);
 			lastVote = msg.getSenderAsClient();
-			Message ballot = new Message(null, msg.getPayload(), MessageType.Vote);      // TODO: BEngin wollte sender bei message fixen,oder ?
+			Message ballot = new Message( "null",msg.getPayload(), MessageType.Vote);      // TODO: BEngin wollte sender bei message fixen,oder ?
 			sender.sendMessage(ballot, msg.getSenderAsClient());
 		}
 		restartElectionTimeout();
 	}
-
+	
 	public void resetVote() {
 		role = 0;
 		didVote = false;
@@ -166,7 +170,7 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	private void heartbeat() {
-
+		
 	}
 	// ##############################################################
 	//
@@ -180,10 +184,13 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	private void becomeCanidate() {
+		resetVote();
 		role = 1;
-		voteLeader();
+		didVote=true;
 		term = term + 1;
 		int votes = 1;
+		//TODO: set Last Vote etc to my Client
+		restartElectionTimeout();
 		Message voteForMeMessage = new Message("192.168.178.51-3538", "Vote for me I am the best and I hate the AfD",
 				MessageType.RequestVoteForMe);
 		sender.broadcastMessage(voteForMeMessage);
