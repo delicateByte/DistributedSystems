@@ -2,7 +2,7 @@ package util;
 
 import main.Message;
 
-public class MessageUtil {
+public class MessageUtils {
 
 	public static void printMessage(Message msg) {
 		System.out.println("Message sender: " + msg.getSender());

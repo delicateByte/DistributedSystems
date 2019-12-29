@@ -71,6 +71,7 @@ public class Raft implements Runnable, NetworkListener {
 	// #############################################################
 	public Raft() {
 		sender = new OutgoingServer();
+		
 	}
 
 	public void initialJoin() {

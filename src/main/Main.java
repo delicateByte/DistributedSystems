@@ -3,16 +3,36 @@ package main;
 import java.util.ArrayList;
 import java.util.List;
 
+import networking.IncomingServer;
+import networking.Phonebook;
 import storage.FileSyncManager;
+import util.NetworkUtils;
 
 public class Main {
-	// ARGS: IP ; PORT ; MODE
+	
+	/* ARGS for first client:
+	 * <own-port>
+	 * ARGS for second client:
+	 * <friend-ip> <friend-port>
+	 */
+	
     public static void main(String[] args) {
         Thread listenerThread = new Thread( new Listener());
         Thread senderThread = new Thread( new Sender());
-       // FileSyncManager.initFromFile(null);                              <------------------------------------bengin pls help
-    	if(args[2]== "CONNECT") {
-    		/*
+        if(args.length == 1) {
+        	FileSyncManager.initBlank();
+        	Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[0]));
+        	Phonebook.addNewNode(me);
+        	
+        	Raft myRaft = new Raft();
+        	Thread raftThread = new Thread(myRaft);
+        	IncomingServer in = new IncomingServer(me.getPort());
+        	in.registerListener(myRaft);
+        	System.out.println("Initalized network with me as only participant.");
+        	System.out.println("Join-Me: " + me.getIp() + "-" + me.getPort());
+        	raftThread.start();
+        } else if(args.length == 2) {
+        	/*
     		One Joins a new Network
     		- start Program with IP & Port of friend
     		- I wanna join 
@@ -28,21 +48,9 @@ public class Main {
     		- noraml raft stuff
 */
     		// Thread raftThread = new Thread(new Raft(senderThread));
-
-    	}else if(args[2]=="INIT") {
-    		  /*Create a Neyetwork
-    		- Port as arg   ( do you thing)  <---------------------------------------------------------- bengin
-    		- add myself to phonebook <------------------------------------------------------------------------- bengin 
-    		*/
-    		// Thread raftThread = new Thread(new Raft(senderThread));
-    	}
-		//  raftThread.start();
-
-
-
-//        listenerThread.start();
-//        senderThread.start();	
-        
+        }else {
+        	System.out.println("Wrong number of arguments.");
+        }
     }
 }
 
