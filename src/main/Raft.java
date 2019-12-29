@@ -73,7 +73,7 @@ public class Raft implements Runnable, NetworkListener {
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
 	private Map<Integer,Integer> messageResponseAggregator = new HashMap<Integer,Integer>();
 	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting
-																				// for
+	private boolean newMessage; 																	// for
 	// Utilities
 	private MessageSender sender;
 	private FileSyncManager fileWriter;
@@ -86,6 +86,7 @@ public class Raft implements Runnable, NetworkListener {
 	public Raft(Client me) {
 		sender = new MessageSender();
 		thisClient = me;
+		newMessage = true;
 	}
 
 	// EMPTY
@@ -110,7 +111,8 @@ public class Raft implements Runnable, NetworkListener {
 	// #############################################################
 
 	public void newMessageForwardedToLeader(Message msg) {
-		if (role == 2) {
+		if (role == 2 && newMessage) {
+			newMessage=false;
 			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 			String payload = msg.getPayload();
 			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
@@ -121,7 +123,8 @@ public class Raft implements Runnable, NetworkListener {
 			AwaitingResponse newTask= new AwaitingResponse(thisClient, MessageType.MessageCached);
 			newTask.setComparePayloads(msg.getPayload());
 			addBroadcastResponseTask(newTask);
-		} else {
+		} else if(role == 2 && !newMessage){
+			//TODO:asadfa
 						}
 		}
 	
@@ -137,8 +140,10 @@ public class Raft implements Runnable, NetworkListener {
 					Message writeMessage = new Message(thisClient,msg.getPayload(),MessageType.WriteMessage);
 					AwaitingResponse newTask= new AwaitingResponse(thisClient, MessageType.MessageWritten);
 					newTask.setComparePayloads(msg.getPayload());
+					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 					addBroadcastResponseTask(newTask);
 					q.offer(writeMessage);
+					newMessage=true;
 				}
 			}
 		}
@@ -386,6 +391,7 @@ public class Raft implements Runnable, NetworkListener {
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
 		// TODO was soll passieren wenn du eine message bekommst?
+		// TODO: Diffenretiate between role =0 & role =2
 		switch (message.getType()) {
 		case AlreadyVoted:
 			break;
@@ -416,6 +422,9 @@ public class Raft implements Runnable, NetworkListener {
 		case IAmTheSenat:
 			// extract client from Message
 			newLeaderChosen(message.getSenderAsClient());
+			break;
+		case ReadyForRaft:
+			// broadcast Phonebook
 			break;
 		}
 	}
