@@ -100,7 +100,7 @@ public class Phonebook {
 	}
 	
 	//return final merged Phonebook
-	public static ArrayList<Client> mergeTwoPhonebooks(List<Client> pb1,List<Client> pb2) {
+	public static List<Client> mergeTwoPhonebooks(List<Client> pb1,List<Client> pb2) {
 		pb1.addAll(pb2);
 		return pb1;
 	}
@@ -120,7 +120,7 @@ public class Phonebook {
 		return String.join("-", teilStrings);
 	}
 	
-	public static ArrayList<Client> importPhonebook(String impString) {
+	public static List<Client> importPhonebook(String impString) {
 		String[] teilStrings = impString.split("(?<!\\\\)-");
 		List<Client> newPhonebook = new ArrayList<Client>();
 		for(String teilString : teilStrings) {
