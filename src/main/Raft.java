@@ -187,10 +187,14 @@ public class Raft implements Runnable, NetworkListener {
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
 			if (task.getResponder() == clnt && task.getType() == type) {
-				itrTaskList.remove(task);
+				itrTaskList.remove();
 			} else {
 				System.out.println("ERROR- No Task like that");
-				Thread.sleep(10000);
+				try {
+					Thread.sleep(100000L);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 
 			}
 		}
