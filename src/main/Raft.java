@@ -28,7 +28,8 @@ public class Raft implements Runnable, NetworkListener {
 	private Client lastVote;
 	private Phonebook phonebook = new Phonebook();
 	private Client thisClient; // TODO: Bengin how can i get tis info
-
+	// Raft specific Aggregation Functions 
+	private int votes;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
 	TimerTask raftCycleManager = new TimerTask() {
@@ -90,8 +91,9 @@ public class Raft implements Runnable, NetworkListener {
 		// Phonebook needs me already as an entry
 		// I need to start recieving Heartbeats from Leader right away
 		// needs to be already in phonbook of leader
+		votes=0;
 		electionTimeout.schedule(raftCycleManager, votingCycle()); // Initial Start of Raft Cycle
-
+		
 	}
 
 	// ##############################################################
