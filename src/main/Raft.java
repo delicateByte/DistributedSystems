@@ -2,8 +2,10 @@ package main;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -18,13 +20,13 @@ import storage.FileSyncManager;
 //TODO: Task List with all open Tasks
 // TODO: Filewrite 
 //TODO: Phonebook snyc 
+// TODO: Find doubles in Tasklist
 public class Raft implements Runnable, NetworkListener {
 
 	// Raft specific
 	private int role; // Roles: 0 - Follower | 1 - Candidate | 2 - Leader
 	private int term; // Term Counter of the current Raft NEtwork of this Node
 	private int cycle; // Number of Election Timeouts within this node
-	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
 	private boolean didVote = false;
 	private Client lastVote;
 	private Phonebook phonebook = new Phonebook();
@@ -68,12 +70,14 @@ public class Raft implements Runnable, NetworkListener {
 	};
 	Queue<Message> q = new LinkedList<Message>(); // Store all Messages that need to be send out from Leader with
 													// Hearthbeat
+	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
+	private Map<Integer,Integer> messageResponseAggregator = new HashMap<Integer,Integer>();
 	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting
 																				// for
 	// Utilities
 	private MessageSender sender;
 	private FileSyncManager fileWriter;
-
+	
 	// ##############################################################
 	//
 	// --------------- MAIN RAFT IMPLEMENTAION ----------------------------
@@ -107,11 +111,14 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void LogReplication(Message msg) {
 		if (role == 2) {
-			// chache Message
-			// send msg to all Clients
-			// await responses
-			// send to all the write Command
-			//
+			messageCache.add(msg);
+			String payload = msg.getPayload();
+			Message cacheMessage = new Message(thisClient,payload,MessageType.NewMessageToCache);
+			q.offer(cacheMessage);
+			//sender.broadcastMessage(cacheMessage);
+			AwaitingResponse newTask= new AwaitingResponse(thisClient, MessageType.MessageCached);
+			newTask.setComparePayloads(msg.getPayload());
+			addBroadcastResponseTask(newTask);
 		} else {
 			if (msg.getType() == MessageType.NewMessageToCache) {
 
@@ -124,6 +131,15 @@ public class Raft implements Runnable, NetworkListener {
 			}
 		}
 	}
+	public void gatherCacheResponses(Message msg) {
+		AwaitingResponse cmp= new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
+		cmp.setComparePayloads(msg.getPayload());
+		if(taskList.contains(cmp)) {
+			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); // TODO:handle failure of this function
+			if()
+		}
+	}
+	public void 
 
 	// ##############################################################
 	//
@@ -220,12 +236,34 @@ public class Raft implements Runnable, NetworkListener {
 			}
 		}
 	}
+	private void findAndDeleteTask(Client clnt, MessageType type,String payload) {
+		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
+		while (itrTaskList.hasNext()) {
+			AwaitingResponse task = itrTaskList.next();
+			if (task.getResponder() == clnt && task.getType() == type && task.getComparePayloads()==payload) {
+				itrTaskList.remove();
+			} else {
+				System.out.println("ERROR- No Task like that");
+				try {
+					Thread.sleep(100000L);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+	}
 
 	private void heartbeat() {
 		if (q.isEmpty()) {
 			sendNormalHeartbeat();
 		} else {
 			Message nextMessage = q.poll();
+			if(nextMessage.getSenderAsClient() ==thisClient) {
+				// broadcasts
+			}else {
+				// single sends
+			}
 			switch (nextMessage.getType()) {
 			case AlreadyVoted:
 				// Do nothing
@@ -351,6 +389,7 @@ public class Raft implements Runnable, NetworkListener {
 			}
 			break;
 		case MessageCached:
+			gatherCacheResponses(message);
 			break;
 		case NewMessageForwardedToLeader:
 			break;
