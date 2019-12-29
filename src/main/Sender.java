@@ -35,7 +35,6 @@ public class Sender implements Runnable {
 			out = new PrintWriter(clientSocket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
@@ -46,7 +45,6 @@ public class Sender implements Runnable {
 		try {
 			resp = in.readLine();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         return resp;
@@ -62,14 +60,12 @@ public class Sender implements Runnable {
 			out.close();
 			clientSocket.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		
 	}
 }

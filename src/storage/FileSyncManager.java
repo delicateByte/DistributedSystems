@@ -78,7 +78,6 @@ public class FileSyncManager {
 			try {
 				bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}	
 		}
@@ -115,7 +114,6 @@ public class FileSyncManager {
 				messages.add(ChatMessage.chatMessageStringToObject(messageString));
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return messages;
