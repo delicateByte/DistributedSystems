@@ -55,7 +55,7 @@ public class Raft implements Runnable, NetworkListener {
 	Timer heartbeatTimer = new Timer("Heartbeat");
 	TimerTask heartbeat = new TimerTask() {
 		public void run() {
-			System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
+//			System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
 			if (role != 2) {
 				heartbeatTimer.cancel();
 			}
