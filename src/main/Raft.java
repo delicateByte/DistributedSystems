@@ -9,7 +9,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
 import networking.NetworkListener;
-import networking.OutgoingServer;
+import networking.MessageSender;
 import networking.Phonebook;
 import storage.FileSyncManager;
 
@@ -65,7 +65,7 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
     Queue<Message> q = new LinkedList<Message>();  //Store all Messages that need to be send out from Leader with Hearthbeat
 	ArrayList<AwaitingResponse> TaskList = new ArrayList<AwaitingResponse>(); // 
 	// Utilities
-	private OutgoingServer sender;
+	private MessageSender sender;
 	private FileSyncManager fileWriter;
 
 	// ##############################################################
@@ -74,7 +74,7 @@ private Client thisClient; 	//TODO: Bengin how can i get tis info
 	//
 	// #############################################################
 	public Raft() {
-		sender = new OutgoingServer();
+		sender = new MessageSender();
 		
 	}
 

@@ -5,7 +5,7 @@ import java.util.List;
 
 import networking.ClientConnector;
 import networking.IncomingServer;
-import networking.OutgoingServer;
+import networking.MessageSender;
 import networking.Phonebook;
 import storage.FileSyncManager;
 import util.NetworkUtils;
@@ -19,21 +19,21 @@ public class Main {
 	 */
 	
     public static void main(String[] args) {
-    	OutgoingServer sender = new OutgoingServer();
+    	MessageSender sender = new MessageSender();
         
+    	FileSyncManager.initBlank();
+    	
         if(args.length == 1) {
-        	// storage and phonebook
-        	FileSyncManager.initBlank();
         	Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[0]));
         	Phonebook.addNewNode(me);
-        	System.out.println(MessageType.WannaJoin.toString());
+        	
         	//raft
-        	Raft myRaft = new Raft();
-        	Thread raftThread = new Thread(myRaft);
+//        	Raft myRaft = new Raft();
+//        	Thread raftThread = new Thread(myRaft);
         	
         	//networking
         	IncomingServer in = new IncomingServer(me.getPort());
-        	in.registerListener(myRaft);
+//        	in.registerListener(myRaft);
         	ClientConnector cc = new ClientConnector(me, sender);
         	in.registerListener(cc);
         	
@@ -41,6 +41,12 @@ public class Main {
         	System.out.println("Join Me: " + me.getIp() + " " + me.getPort());
 //        	raftThread.start();
         } else if(args.length == 2) {
+        	Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[1]));
+        	Client friend = new Client(args[0], Integer.parseInt(args[1]));
+        	Message wannaJoin = new Message(me, "pleeeeease", MessageType.WannaJoin);
+        	System.out.println("Sending join request to friend " + friend.getIp() + "-" + friend.getPort());
+        	System.out.println("response: " + sender.sendMessage(wannaJoin, friend));
+        	
         	/*
     		One Joins a new Network
     		- start Program with IP & Port of friend

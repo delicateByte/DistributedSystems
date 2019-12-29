@@ -12,7 +12,7 @@ import main.Message;
 import main.MessageType;
 import networking.IncomingServer;
 import networking.NetworkListener;
-import networking.OutgoingServer;
+import networking.MessageSender;
 import util.MessageUtils;
 
 public class NetworkingTests implements NetworkListener {
@@ -29,7 +29,7 @@ public class NetworkingTests implements NetworkListener {
 		IncomingServer in = new IncomingServer(3503);
 		in.registerListener(this);
 
-		OutgoingServer out = new OutgoingServer();
+		MessageSender out = new MessageSender();
 		everythingOkay = false;
 		out.sendMessage(message, new Client("localhost", 3503));
 
