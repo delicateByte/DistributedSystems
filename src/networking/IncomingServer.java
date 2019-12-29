@@ -47,6 +47,8 @@ public class IncomingServer {
 								for(NetworkListener l : listeners) {
 									l.onMessageReceived(message, writer);
 								}
+								writer.write("end\n");
+								writer.flush();
 							}
 						} catch (IOException e) {
 							e.printStackTrace();

@@ -16,5 +16,5 @@ public enum MessageType {
 	WannaJoin,		//request from joiner to friend
 	WhichPort, 	//request from joiner to leader
 	HeartbeatResponse,	
-	
+	ReadyForRaft,
 }
