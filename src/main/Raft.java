@@ -324,6 +324,7 @@ public class Raft implements Runnable, NetworkListener {
 		case RequestVoteForMe:
 			break;
 		case Vote:
+			checkVote();
 			break;
 		case WriteMessage:
 			break;
