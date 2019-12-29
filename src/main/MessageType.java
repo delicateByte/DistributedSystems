@@ -9,7 +9,7 @@ public enum MessageType {
 	Vote,
 	RequestVoteForMe,
 	AlreadyVoted,
-	IamTheSenat, //New Leader sends to all this that they add them as new leader
+	IAmTheSenat, //New Leader sends to all this that they add them as new leader
 	RequestFullMessageHistoryFromAnotherNode,
 	RequestActiveClientsListFromAnotherNode,
 	NewClientInPhonebookSyncronizeWithAllClients //TODO: DO THIS
