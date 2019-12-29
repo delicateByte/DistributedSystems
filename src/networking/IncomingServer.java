@@ -1,8 +1,10 @@
 package networking;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -41,8 +43,9 @@ public class IncomingServer {
 										infos[0],
 										infos[1].replace("\\;", ";"),
 										MessageType.valueOf(infos[2]));
+								PrintWriter writer = new PrintWriter(connector.getOutputStream());
 								for(NetworkListener l : listeners) {
-									l.onMessageReceived(message);
+									l.onMessageReceived(message, writer);
 								}
 							}
 						} catch (IOException e) {

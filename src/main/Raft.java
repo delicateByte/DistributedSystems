@@ -1,8 +1,8 @@
 package main;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
@@ -151,7 +151,7 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	@Override
-	public void onMessageReceived(Message message) {
+	public void onMessageReceived(Message message, PrintWriter response) {
 		// TODO was soll passieren wenn du eine message bekommst?
 		switch (message.getType()) {
 		case AlreadyVoted:
@@ -171,7 +171,6 @@ public class Raft implements Runnable, NetworkListener {
 		case WriteMessage:
 			break;
 		}
-
 	}
 
 }

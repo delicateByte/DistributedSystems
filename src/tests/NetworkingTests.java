@@ -3,6 +3,8 @@ package tests;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.PrintWriter;
+
 import org.junit.jupiter.api.Test;
 
 import main.Client;
@@ -24,7 +26,7 @@ public class NetworkingTests implements NetworkListener {
 		msg = message;
 		MessageUtils.printMessage(msg);
 		
-		IncomingServer in = new IncomingServer("192.168.178.51-3503");
+		IncomingServer in = new IncomingServer(3503);
 		in.registerListener(this);
 		
 		OutgoingServer out = new OutgoingServer();
@@ -43,7 +45,7 @@ public class NetworkingTests implements NetworkListener {
 	}
 
 	@Override
-	public void onMessageReceived(Message message) {
+	public void onMessageReceived(Message message, PrintWriter response) {
 		if(message.getSender().equals(msg.getSender()) &&
 				message.getPayload().equals(msg.getPayload()) &&
 				message.getType() == msg.getType()) {
