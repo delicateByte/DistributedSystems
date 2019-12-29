@@ -22,11 +22,19 @@ public class ChatMessage implements Comparable<ChatMessage>{
 	public int getId() {
 		return id;
 	}
-	public static String chatMessageObjectToString(ChatMessage msg) {
-		return "RESULT";
+	public static String chatMessageObjectToString(ChatMessage message) {
+		String messageString = 	message.getId() + ";"
+				+	message.getSender().replace(";", "\\;") + ";" 
+				+ 	message.getText().replace(";", "\\;") + "";
+		return messageString;
 	}
-	public static ChatMessage chatMessageStringToObject(String str) {
-		return null;
+	public static ChatMessage chatMessageStringToObject(String messageString) {
+		String[] messageMeta = messageString.split("(?<!\\\\);");
+		// escapes are in the messageMeta \; 
+		ChatMessage message = new ChatMessage(Integer.parseInt(messageMeta[0]), 
+				messageMeta[2].replace("\\;", ";"), 
+				messageMeta[1].replace("\\;", ";"));
+		return message;
 	}
 	@Override
 	public int compareTo(ChatMessage otherMessage) {
