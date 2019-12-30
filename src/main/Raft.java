@@ -523,7 +523,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener{
 		Message voteForMeMessage = new Message(thisClient,
 				"Vote for me I am the best and I am better the AfD-N0de", MessageType.RequestVoteForMe);
 		sender.broadcastMessage(voteForMeMessage, false, "VoteForMe could not be broadcasted to all");
-		restartElectionTimeout();
+		//restartElectionTimeout();
 		}
 
 	}
