@@ -22,6 +22,9 @@ public class ChatMessage implements Comparable<ChatMessage>{
 	public int getId() {
 		return id;
 	}
+	public void setId(int id) {
+		this.id = id;
+	}
 	public static String chatMessageObjectToString(ChatMessage message) {
 		String messageString = 	message.getId() + ";"
 				+	message.getSender().replace(";", "\\;") + ";" 

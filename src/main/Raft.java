@@ -32,6 +32,7 @@ public class Raft implements Runnable, NetworkListener {
 	private long lastHeartbeat;
 	// Raft specific Aggregation Functions
 	private int votes;
+	private int idCounter = 1;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
 	TimerTask raftCycleManager = new TimerTask() {
@@ -107,7 +108,10 @@ public class Raft implements Runnable, NetworkListener {
 	// #############################################################
 
 	public void newMessageForwardedToLeader(Message msg) {
-		int id = ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
+		ChatMessage cMessage = ChatMessage.chatMessageStringToObject(msg.getPayload());
+		cMessage.setId(idCounter);
+		idCounter++;
+		int id = cMessage.getId();
 		int idPipeline;
 		boolean pipelineEmpty;
 		if (!messageCache.isEmpty()) {
@@ -211,6 +215,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void writeTheMesssage(Message msg) {
 		ChatMessage extract = ChatMessage.chatMessageStringToObject(msg.getPayload());
+		idCounter = extract.getId()+1;
 		FileSyncManager.addMessage(extract);
 		for (ChatMessage m : messageCache) {
 			if (m.getId() == extract.getId()) {
