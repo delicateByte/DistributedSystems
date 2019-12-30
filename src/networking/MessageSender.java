@@ -47,7 +47,9 @@ public class MessageSender {
 	private String sendAgain(Message msg, Client target, int i, int maxRetries, String error) {
 		i++;
 		if(i > maxRetries){
-			System.out.println("[RAFT] " + error);
+			if(!error.equals("")) {
+				System.out.println("[RAFT] " + error);
+			}
 			return "error";
 		}
 		try {
@@ -79,12 +81,6 @@ public class MessageSender {
 				});
 				sender.start();
 			}
-		}
-		//MessageUtils.printMessage(message);
-		if(message.getType()!=MessageType.Heartbeat) {
-			System.out.println("Send Message--------------");
-
-			MessageUtils.printMessage(message);
 		}
 	}
 }
