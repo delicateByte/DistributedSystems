@@ -62,6 +62,7 @@ public class Phonebook {
 	}
 	public static void addNewNode(Client client) {
 		phonebook.add(client);
+		System.out.println("AddednewNode");
 	}
 
 	public static void deleteClient(Client client) {
