@@ -111,6 +111,7 @@ public class Phonebook {
 	//return final merged Phonebook
 	public static List<Client> mergeTwoPhonebooks(List<Client> pb1,List<Client> pb2) {
 		pb1.addAll(pb2);
+		removeDuplicates();
 		return pb1;
 	}
 	
