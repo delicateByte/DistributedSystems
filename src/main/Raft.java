@@ -53,7 +53,7 @@ public class Raft implements Runnable, NetworkListener {
 	Timer heartbeatTimer = new Timer("Heartbeat");
 	TimerTask heartbeat = new TimerTask() {
 		public void run() {
-//			System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
+			//System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
 			if (role != 2) {
 				heartbeatTimer.cancel();
 			}
@@ -459,6 +459,7 @@ public class Raft implements Runnable, NetworkListener {
 				break;
 
 			}
+			System.out.println("sendOut new Message"+nextMessage.getType());
 			if (broadcast) {
 				sender.broadcastMessage(nextMessage);
 			} else {
@@ -521,9 +522,8 @@ public class Raft implements Runnable, NetworkListener {
 	private void becomeLeader() {
 		System.out.println("Elected Leader");
 		role = 2;
-		syncRoleWithPhonebook();
 		taskList.clear();
-		stopElectionTimeout();
+  		stopElectionTimeout();
 		Phonebook.newLeader(thisClient);
 		heartbeatTimer = new Timer("Heartbeat-" + term);
 		heartbeatTimer.scheduleAtFixedRate(heartbeat, 2, 35);
@@ -547,7 +547,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
-
+		System.out.println("New Message"+message.getType());
 		switch (message.getType()) {
 		case AlreadyVoted:
 			break;
@@ -642,6 +642,7 @@ public class Raft implements Runnable, NetworkListener {
 					twoLeaders(message.getSenderAsClient());
 				}
 			}else {
+				System.out.println("Importing Phonebook");
 				Phonebook.importPhonebook(message.getPayload());
 			}
 			break;
