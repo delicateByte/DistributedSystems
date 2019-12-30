@@ -1,15 +1,14 @@
 package networking;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 import main.Client;
 import main.Message;
-import util.MessageUtils;
 
 public class MessageSender {
 	
@@ -21,8 +20,9 @@ public class MessageSender {
 	 * @param recipient the recipient in this form: 192.168.178.51-3538
 	 * (ip + "-" + port)
 	 * @return returns a response
+	 * @throws Exception 
 	 */
-	public String sendMessage(Message message, Client client) {
+	public String sendMessage(Message message, Client client) throws Exception {
 		try {
 			Socket socket = new Socket(client.getIp(), client.getPort());
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -33,10 +33,9 @@ public class MessageSender {
 			br.close();
 			socket.close();
 			return response;
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			throw e;
 		}
-		return null;
 	}
 	
 	/**
@@ -45,13 +44,18 @@ public class MessageSender {
 	 * @return returns if sending was error free (no confirmation if 
 	 * the message was delivered successfully). 
 	 */
-	public boolean broadcastMessage(Message message) {
+	public List<Client> broadcastMessage(Message message) {
+		List<Client> errorClients = new ArrayList<Client>();
 		for(Client c : Phonebook.getFullPhonebook()) {
 			if(!c.getIp().equals(message.getSenderAsClient().getIp()) || c.getPort() != message.getSenderAsClient().getPort()) {
-				sendMessage(message, c);
+				try {
+					sendMessage(message, c);
+				}catch(Exception e) {
+					errorClients.add(c);
+				}
 			}
 		}
 		//MessageUtils.printMessage(message);
-		return true;
+		return errorClients;
 	}
 }
