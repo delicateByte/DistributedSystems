@@ -459,7 +459,7 @@ public class Raft implements Runnable, NetworkListener {
 				break;
 
 			}
-			System.out.println("sendOut new Message"+nextMessage.getType());
+			System.out.println("send new Message"+nextMessage.getType());
 			if (broadcast) {
 				sender.broadcastMessage(nextMessage);
 			} else {
@@ -547,7 +547,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
-		System.out.println("New Message"+message.getType());
+		System.out.println("New Message of Type "+message.getType());
 		switch (message.getType()) {
 		case AlreadyVoted:
 			break;
