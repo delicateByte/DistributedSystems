@@ -548,7 +548,7 @@ public class Raft implements Runnable, NetworkListener {
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
 		System.out.println("New Message of Type "+message.getType());
-		switch (message.getType()) {
+		/*switch (message.getType()) {
 		case AlreadyVoted:
 			break;
 		case Heartbeat:
@@ -667,7 +667,7 @@ public class Raft implements Runnable, NetworkListener {
 		default:
 			break;
 
-		}
+		}*/
 	}
 
 }
