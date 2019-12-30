@@ -12,13 +12,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 
+import GUI.ChatListener;
 import networking.MessageSender;
 import networking.NetworkListener;
 import networking.Phonebook;
 import storage.FileSyncManager;
 
 
-public class Raft implements Runnable, NetworkListener {
+public class Raft implements Runnable, NetworkListener, ChatListener{
 
 	// Raft specific
 	private int role; // Roles: 0 - Follower | 1 - Candidate | 2 - Leader
@@ -705,6 +706,18 @@ public class Raft implements Runnable, NetworkListener {
 			break;
 
 		}
+	}
+
+	@Override
+	public boolean onMessageSend(String message) {
+		// TODO implement what happens when a message should be sent
+		return false;
+	}
+
+	@Override
+	public void onWindowClose() {
+		// TODO implement wha thappens when the window is to be closed
+		
 	}
 
 }

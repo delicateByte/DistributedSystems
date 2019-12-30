@@ -1,27 +1,24 @@
 package main;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import networking.ClientConnector;
 import networking.IncomingServer;
 import networking.MessageSender;
 import networking.Phonebook;
 import storage.FileSyncManager;
+import tests.ChatMessageGenerator;
 import util.NetworkUtils;
 
-public class Main {
+public class Main{
 
 	/*
 	 * ARGS for first client: <own-port> ARGS for second client: <friend-ip>
 	 * <friend-port>
 	 */
-
+	
 	public static void main(String[] args) {
 		MessageSender sender = new MessageSender();
-
 		FileSyncManager.initBlank();
-
+		
 		if (args.length == 1) {
 			Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[0]));
 			Phonebook.addNewNode(me);
@@ -39,6 +36,7 @@ public class Main {
 			Thread raftThread = new Thread(myRaft);
 			in.registerListener(myRaft);
 			raftThread.start();
+//			ChatMessageGenerator.spamThis(myRaft);
 		} else if (args.length == 2) {
 			// ask friend for the leader id
 			Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[1]));
@@ -86,7 +84,7 @@ public class Main {
 			Thread raftThread = new Thread(myRaft);
 			in.registerListener(myRaft);
 			raftThread.start();
-			
+//			ChatMessageGenerator.spamThis(myRaft);
 			
 			/*
 			 * One Joins a new Network - start Program with IP & Port of friend - I wanna
