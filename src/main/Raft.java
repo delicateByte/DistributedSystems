@@ -227,7 +227,9 @@ public class Raft implements Runnable, NetworkListener {
 	public void hearthbeatResetElectionTimout() {
 		restartElectionTimeout();
 	}
-
+	public void syncRoleWithPhonebook() {
+		Phonebook.setRights(thisClient, role);
+	}
 	public void restartElectionTimeout() {
 		stopElectionTimeout();
 		TimerTask raftCycleReset = new TimerTask() {

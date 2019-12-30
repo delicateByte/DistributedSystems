@@ -23,6 +23,9 @@ public class MessageSender {
 	 */
 	public String sendMessage(Message message, Client client) {;
 		try {
+			System.out.println("Message"+message);
+			System.out.println("To"+client);
+
 			Socket socket = new Socket(client.getIp(), client.getPort());
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			PrintWriter pw = new PrintWriter(socket.getOutputStream());

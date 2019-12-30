@@ -48,7 +48,18 @@ public class Phonebook {
 		}
 
 	}
+	public static void setRights(Client clt,int role) {
+		if(phonebook.contains(clt)) {
+			clt.setRights(role);
+		} else {
+			for(Client c : phonebook) {
+				if(c.getIp().equals(clt.getIp()) && c.getPort() == clt.getPort()) {
+					c.setRights(role);
+				}
+			}
+		}
 
+	}
 	public static void addNewNode(Client client) {
 		phonebook.add(client);
 	}
