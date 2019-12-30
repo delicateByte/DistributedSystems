@@ -46,7 +46,7 @@ public class MessageSender {
 	 */
 	public boolean broadcastMessage(Message message) {
 		for(Client c : Phonebook.getFullPhonebook()) {
-			if(c.getIp() != message.getSenderAsClient().getIp() || c.getPort() != message.getSenderAsClient().getPort()) {
+			if(c.getIp().equals(message.getSenderAsClient().getIp()) || c.getPort() != message.getSenderAsClient().getPort()) {
 				sendMessage(message, c);
 			}
 		}
