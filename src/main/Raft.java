@@ -16,8 +16,7 @@ import networking.NetworkListener;
 import networking.Phonebook;
 import storage.FileSyncManager;
 
-//TODO: Two Leader = leader with Higher term takes it & Merge Client Lists 
-// TODO: Find doubles in Tasklist
+
 public class Raft implements Runnable, NetworkListener {
 
 	// Raft specific
@@ -119,7 +118,8 @@ public class Raft implements Runnable, NetworkListener {
 			pipelineEmpty = true;
 			idPipeline = 0;
 		}
-		if (role == 2 && newMessage && !pipelineEmpty && id < idPipeline || role == 2 && newMessage && pipelineEmpty) {
+		if (role == 2 && newMessage && !pipelineEmpty && id < idPipeline && !twoLeaders
+				|| role == 2 && newMessage && pipelineEmpty && !twoLeaders) {
 			newMessage = false;
 			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 			String payload = msg.getPayload();
@@ -137,7 +137,7 @@ public class Raft implements Runnable, NetworkListener {
 			String payload = msg.getPayload();
 			ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
 			messageResponseAggregator.put(extractId.getId(), 0);
-		} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline) {
+		} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline && !twoLeaders) {
 			newMessage = false;
 			String payload = msg.getPayload();
 			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
@@ -151,7 +151,7 @@ public class Raft implements Runnable, NetworkListener {
 	}
 
 	public void checkIfMessageInPipline() {
-		if (newMessage && !messageCache.isEmpty()) {
+		if (newMessage && !messageCache.isEmpty() && !twoLeaders) {
 			newMessage = false;
 			ChatMessage payload = messageCache.get(0);
 			Message cacheMessage = new Message(thisClient, ChatMessage.chatMessageObjectToString(payload),
@@ -168,8 +168,7 @@ public class Raft implements Runnable, NetworkListener {
 		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
 		if (taskList.contains(cmp)) {
-			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); // TODO:handle failure of this
-																							// function
+			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); 
 			int msgId = ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
 			if (messageResponseAggregator.containsKey(msgId)) {
 				messageResponseAggregator.put(msgId, messageResponseAggregator.get(msgId) + 1);
@@ -189,6 +188,11 @@ public class Raft implements Runnable, NetworkListener {
 					newMessage = true;
 				}
 			}
+		}else {
+			System.out.println("##################");
+			System.out.println("Recieved Message But not in TaskList");
+			System.out.println("##################");
+
 		}
 	}
 
@@ -273,6 +277,15 @@ public class Raft implements Runnable, NetworkListener {
 		return Long.valueOf(random);
 	}
 
+	private void leaderStepDown(Client c) {
+		System.out.println("Delected Leader");
+		role = 0;
+		Phonebook.newLeader(c);
+		taskList.clear();
+		heartbeatTimer.cancel();
+		restartElectionTimeout();
+
+	}
 	// ##############################################################
 	//
 	// --------------- Leader Capabilities ----------------------------
@@ -283,25 +296,58 @@ public class Raft implements Runnable, NetworkListener {
 
 	}
 
-	private void twoLeaders() {
-		twoLeaders = true; // TODO: Block everything is this is set
-		Message konter = new Message(thisClient, "1" + term + "-" + thisClient.getIp() + "-" + thisClient.getPort(),
+	private void twoLeaders(Client c) {
+		Message konter = new Message(thisClient,
+				"1" + "-" + term + "-" + thisClient.getIp() + "-" + thisClient.getPort(),
 				MessageType.ResolveTwoLeaders);
+		sender.sendMessage(konter, c);
 
 	}
 
 	private void resolveTwoLeaders(Message msg) {
-		int msglvl = Integer.parseInt(msg.getPayload().split("\\,")[0], 10);
+		int msglvl = Integer.parseInt(msg.getPayload().substring(0, 2));
+		twoLeaders = true; 
 		switch (msglvl) {
 		case 1:
-			
+
+			if (Integer.parseInt(msg.getPayload().split(":")[1], 10) < term) {
+				Message konter = new Message(thisClient,
+						"2" + ":" + term + ":" + thisClient.getIp() + ":" + thisClient.getPort(),
+						MessageType.ResolveTwoLeaders);
+				sender.sendMessage(konter, msg.getSenderAsClient());
+			} else if (Integer.parseInt(msg.getPayload().split(":")[1], 10) >= term) {
+				Message konter = new Message(thisClient, "4" + Phonebook.exportPhonebook(),
+						MessageType.ResolveTwoLeaders);
+				sender.sendMessage(konter, msg.getSenderAsClient());
+				leaderStepDown(msg.getSenderAsClient());
+
+			}
 			break;
 		case 2:
+			leaderStepDown(msg.getSenderAsClient());
+			Message konter = new Message(thisClient, "4" + Phonebook.exportPhonebook(), MessageType.ResolveTwoLeaders);
+			sender.sendMessage(konter, msg.getSenderAsClient());
 			break;
-		case 3:
-			break;
+//		case 3:
+//			Message konter = new Message(thisClient, "4"+Phonebook.exportPhonebook(),
+//					MessageType.ResolveTwoLeaders);
+//			sender.sendMessage(konter, msg.getSenderAsClient());
+//			break;
 		case 4:
+			System.out.println("MErging two leaders");
+			Phonebook.importPhonebook(msg.getPayload().substring(1, msg.getPayload().length()));
+			Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient + "-" + "Leader",
+					MessageType.IAmTheSenat);
+			sender.broadcastMessage(IAmTheSenate);
+			Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
+					MessageType.NewClientInPhonebookSyncronizeWithAllClients);
+			q.offer(newBroadcastSyncPhonebook);
+			// TODO: MAYBE Clear Cache of stepping Down
+			// TODO: MAYBE send full file to every node
+			// TODO : MAYBE send Cache to every Node
+			twoLeaders = false;
 			break;
+			
 		default:
 
 			break;
@@ -367,7 +413,6 @@ public class Raft implements Runnable, NetworkListener {
 			switch (nextMessage.getType()) {
 			case Heartbeat:
 				broadcast = true;
-
 				break;
 //			case MessageCached:
 //				break;
@@ -432,6 +477,9 @@ public class Raft implements Runnable, NetworkListener {
 	// after Recieving a I am Your Leader MEssage
 	public void newLeaderChosen(Client clnt) {
 		phonebook.newLeader(clnt);
+		if(role !=0) {
+			role =0;
+		}
 	}
 
 	private void becomeCanidate() {
@@ -481,7 +529,9 @@ public class Raft implements Runnable, NetworkListener {
 	public void stopHeartbeat() {
 		heartbeatTimer.cancel();
 	}
-
+	public void gatherHeartbeatResponse(Message m) {
+		
+	}
 	// ##############################################################
 	//
 	// --------------- Message Management ----------------------------
@@ -490,24 +540,24 @@ public class Raft implements Runnable, NetworkListener {
 
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
-		// TODO was soll passieren wenn du eine message bekommst?
-		// TODO: Diffenretiate between role =0 & role =2
+
 		switch (message.getType()) {
 		case AlreadyVoted:
 			break;
 		case Heartbeat:
 			if (role != 2) {
 				restartElectionTimeout();
+				role=0;
 			}
 			if (role == 2) {
 				// if event is triggered do not trigger again
 				if (!twoLeaders) {
-					twoLeaders();
+					twoLeaders(message.getSenderAsClient());
 				}
 			}
 			break;
 		case MessageCached:
-			gatherCacheResponses(message);
+	
 			break;
 		case NewMessageForwardedToLeader:
 			if (role == 2) {
@@ -517,44 +567,94 @@ public class Raft implements Runnable, NetworkListener {
 			}
 			break;
 		case NewMessageToCache:
+			if (role == 2) {
+				gatherCacheResponses(message);
+				if (!twoLeaders) {
+					twoLeaders(message.getSenderAsClient());
+				}
+			} else {
+
+			}
 			break;
 		case RequestVoteForMe:
+			if (role == 2) {
+				Message hb = new Message(thisClient, term + "-" + this.thisClient + "-" + "Leader",
+						MessageType.Heartbeat);
+				sender.sendMessage(hb,message.getSenderAsClient() );
+			} else {
+
+			}
 			break;
 		case Vote:
-			checkVote();
+			if(role ==1) {
+				checkVote();
+			}
 			break;
 		case WriteMessage:
+			if (role == 2) {
+				if (!twoLeaders) {
+					twoLeaders(message.getSenderAsClient());
+				}
+			} else {
+				writeTheMesssage(message);
+			}
 			break;
 		case IAmTheSenat:
 			// extract client from Message
-			newLeaderChosen(message.getSenderAsClient());
+			if(role == 2) {
+				if (!twoLeaders) {
+				twoLeaders(message.getSenderAsClient());
+			}
+				
+			}else {
+				newLeaderChosen(message.getSenderAsClient());
+				
+			}
 			break;
 		case ReadyForRaft:
 			if (role == 2) {
 				Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
 						MessageType.NewClientInPhonebookSyncronizeWithAllClients);
-				q.add(newBroadcastSyncPhonebook);
+				q.offer(newBroadcastSyncPhonebook);
 			} else {
 				Phonebook.importPhonebook(message.getPayload());
 			}
 			break;
 		case HeartbeatResponse:
+			gatherHeartbeatResponse(message);
 			break;
 		case MessageWritten:
+			if(role==2) {
+				gatherWriteResponses(message);
+			}
 			break;
 		case NewClientInPhonebookSyncronizeWithAllClients:
+			if(role==2) {
+				if (!twoLeaders) {
+					twoLeaders(message.getSenderAsClient());
+				}
+			}else {
+				Phonebook.importPhonebook(message.getPayload());
+			}
 			break;
-		case RequestActiveClientsListFromAnotherNode:
-			break;
+//		case RequestActiveClientsListFromAnotherNode:
+//			break;
 		case RequestFullMessageHistoryFromAnotherNode:
+			if(role ==2){
+				
+			}else {
+				//TODO: BENGIN wollen wir einen ganzen Chache Transfer ?benötige dann FileSyncMessanger import / export functions
+			}
 			break;
 		case ResolveTwoLeaders:
-			resolveTwoLeaders(message);
+			if(role==2) {
+				resolveTwoLeaders(message);
+			}
 			break;
-		case WannaJoin:
-			break;
-		case WhichPort:
-			break;
+//		case WannaJoin:
+//			break;
+//		case WhichPort:
+//			break;
 		default:
 			break;
 

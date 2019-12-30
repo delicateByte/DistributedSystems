@@ -74,7 +74,9 @@ public class ChatGUI extends JFrame{
 		
 		//TODO: Remove the test displays
 		this.updateChat("[13:37 | Leethacker] Wer hat Bock zu zocken?");
-		this.addChat("[13:37 | .xXUltimatePussyDestroyer|Xx.] Ich bin dabei");
+		this.addChat("[13:37 | .xXUltimateSuperSmashPlayer|Xx.] Ich bin dabei");
+		this.addChat("[13:38 | Dungeon Master] Würfel einen W20 auf Überzeugung!");
+
 	}
 	
 	// extended constructor when location is specified (uses the default constructor)

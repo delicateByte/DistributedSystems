@@ -16,8 +16,11 @@ public class Phonebook {
 				return c;
 		}
 		// code below is only executed when no leader was found
-		//TODO: Do something in this line because leader is not found
-		return null;
+		try {
+			Thread.sleep(1000L);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		
 //		Iterator<Client> itrClient = phonebook.iterator();
 //		Client leader = null;
@@ -26,7 +29,7 @@ public class Phonebook {
 //				System.out.println(itrClient.next());
 //				leader = itrClient.next();
 //			} else {
-//				// TODO: HOW HANDLE IF NO LEADER IS FOUND AT A POINT IN TIME
+//				// 
 //			}
 //		}
 //		return leader;
@@ -42,14 +45,7 @@ public class Phonebook {
 				}
 			}
 		}
-//		Iterator<Client> itrClient = phonebook.iterator();
-//		while (itrClient.hasNext()) {
-//			if (itrClient.next() == clt) {
-//				itrClient.next().setRights(2);
-//			} else {
-//				// TODO: HOW HANDLE IF NO LEADER IS FOUND AT A POINT IN TIME
-//			}
-//		}
+
 	}
 
 	public static void addNewNode(Client client) {

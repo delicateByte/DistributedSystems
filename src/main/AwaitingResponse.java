@@ -4,7 +4,7 @@ public class AwaitingResponse {
 	private Client responder;
 	private MessageType type;
 	private String comparePayloads ;
-	// TODO: NOTE: AWAIT with leader/myself as client = broadcast response await
+	// NOTE: AWAIT with leader/myself as client = broadcast response await
 	public AwaitingResponse(Client c, MessageType t) {
 		responder = c;
 		type = t;
