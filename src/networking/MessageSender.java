@@ -77,6 +77,8 @@ public class MessageSender {
 		}
 		//MessageUtils.printMessage(message);
 		if(message.getType()!=MessageType.Heartbeat) {
+			System.out.println("Send Message--------------");
+
 			MessageUtils.printMessage(message);
 		}
 		
