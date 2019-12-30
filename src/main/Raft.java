@@ -256,11 +256,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					
 					if (role != 2) {
 						// resetVote();
-						try {
-							//Thread.sleep(ThreadLocalRandom.current().nextInt(0, 200) + 150);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+
 
 						becomeCanidate();
 					}
@@ -750,6 +746,17 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	@Override
 	public boolean onMessageSend(String message) {
 		// TODO implement what happens when a message should be sent
+		if(role==2) {
+			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(), System.currentTimeMillis());
+	        String payload = ChatMessage.chatMessageObjectToString(msg);
+	        Message m = new Message(thisClient,payload,MessageType.NewMessageForwardedToLeader);
+	        newMessageForwardedToLeader(m);
+		}else {
+			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(), System.currentTimeMillis());
+	        String payload = ChatMessage.chatMessageObjectToString(msg);
+	        
+	        sender.sendMessageAutoRetry(new Message(thisClient, payload, MessageType.NewMessageForwardedToLeader), Phonebook.getLeader(), 10, "error message ausdenken");
+		}
 		return false;
 	}
 
