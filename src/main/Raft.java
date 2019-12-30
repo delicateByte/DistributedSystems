@@ -340,7 +340,7 @@ public class Raft implements Runnable, NetworkListener {
 		case 4:
 			System.out.println("MErging two leaders");
 			Phonebook.importPhonebook(msg.getPayload().substring(1, msg.getPayload().length()));
-			Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient + "-" + "Leader",
+			Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient.getIp() +"-"+thisClient.getPort()+ "-" + "Leader",
 					MessageType.IAmTheSenat);
 			sender.broadcastMessage(IAmTheSenate);
 			Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
@@ -527,7 +527,7 @@ public class Raft implements Runnable, NetworkListener {
 		Phonebook.newLeader(thisClient);
 		heartbeatTimer = new Timer("Heartbeat-" + term);
 		heartbeatTimer.scheduleAtFixedRate(heartbeat, 2, 35);
-		Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient + "-" + "Leader",
+		Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient.getIp()+"-"+thisClient.getPort() + "-" + "Leader",
 				MessageType.IAmTheSenat);
 		sender.broadcastMessage(IAmTheSenate);
 
