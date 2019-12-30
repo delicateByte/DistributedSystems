@@ -17,9 +17,6 @@ import networking.Phonebook;
 import storage.FileSyncManager;
 
 //TODO: Two Leader = leader with Higher term takes it & Merge Client Lists 
-//TODO: Task List with all open Tasks
-// TODO: Filewrite 
-//TODO: Phonebook snyc 
 // TODO: Find doubles in Tasklist
 public class Raft implements Runnable, NetworkListener {
 
@@ -30,7 +27,8 @@ public class Raft implements Runnable, NetworkListener {
 	private boolean didVote = false;
 	private Client lastVote;
 	private Phonebook phonebook = new Phonebook();
-	private Client thisClient; // TODO: Bengin how can i get tis info
+	private Client thisClient;
+	private boolean twoLeaders;
 	// Raft specific Aggregation Functions
 	private int votes;
 	// Raft Timer
@@ -47,7 +45,6 @@ public class Raft implements Runnable, NetworkListener {
 				resetVote();
 				becomeCanidate();
 			}
-			// TODO: phonebook.deactivateLeader();
 			// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
 			// problem with the Leader and a new needs to be elected
 		}
@@ -73,7 +70,7 @@ public class Raft implements Runnable, NetworkListener {
 	private ArrayList<ChatMessage> messageCache = new ArrayList<ChatMessage>();
 	private Map<Integer, Integer> messageResponseAggregator = new HashMap<Integer, Integer>();
 	ArrayList<AwaitingResponse> taskList = new ArrayList<AwaitingResponse>(); // holds all response leader is waiting
-	private boolean newMessage; // for
+	private boolean newMessage; // for being able to only process on message at a time
 	// Utilities
 	private MessageSender sender;
 	private FileSyncManager fileWriter;
@@ -87,6 +84,7 @@ public class Raft implements Runnable, NetworkListener {
 		sender = new MessageSender();
 		thisClient = me;
 		newMessage = true;
+		twoLeaders = false;
 	}
 
 	// EMPTY
@@ -111,17 +109,17 @@ public class Raft implements Runnable, NetworkListener {
 	// #############################################################
 
 	public void newMessageForwardedToLeader(Message msg) {
-		int id =ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
+		int id = ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
 		int idPipeline;
 		boolean pipelineEmpty;
-		if(!messageCache.isEmpty()){
-			 idPipeline = messageCache.get(0).getId();
-			 pipelineEmpty =false;
-		}else {
-			 pipelineEmpty =true;
-			 idPipeline = 0;
+		if (!messageCache.isEmpty()) {
+			idPipeline = messageCache.get(0).getId();
+			pipelineEmpty = false;
+		} else {
+			pipelineEmpty = true;
+			idPipeline = 0;
 		}
-		if (role == 2 && newMessage && !pipelineEmpty && id<idPipeline ||role == 2 && newMessage && pipelineEmpty ) {
+		if (role == 2 && newMessage && !pipelineEmpty && id < idPipeline || role == 2 && newMessage && pipelineEmpty) {
 			newMessage = false;
 			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 			String payload = msg.getPayload();
@@ -139,7 +137,7 @@ public class Raft implements Runnable, NetworkListener {
 			String payload = msg.getPayload();
 			ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
 			messageResponseAggregator.put(extractId.getId(), 0);
-		}else if(role==2 && newMessage && !pipelineEmpty && id>idPipeline) {
+		} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline) {
 			newMessage = false;
 			String payload = msg.getPayload();
 			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
@@ -151,11 +149,13 @@ public class Raft implements Runnable, NetworkListener {
 			addBroadcastResponseTask(newTask);
 		}
 	}
+
 	public void checkIfMessageInPipline() {
-		if(newMessage && !messageCache.isEmpty()) {
-			newMessage=false;
+		if (newMessage && !messageCache.isEmpty()) {
+			newMessage = false;
 			ChatMessage payload = messageCache.get(0);
-			Message cacheMessage = new Message(thisClient, ChatMessage.chatMessageObjectToString(payload), MessageType.NewMessageToCache);
+			Message cacheMessage = new Message(thisClient, ChatMessage.chatMessageObjectToString(payload),
+					MessageType.NewMessageToCache);
 			q.offer(cacheMessage);
 			// sender.broadcastMessage(cacheMessage);
 			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
@@ -163,6 +163,7 @@ public class Raft implements Runnable, NetworkListener {
 			addBroadcastResponseTask(newTask);
 		}
 	}
+
 	public void gatherCacheResponses(Message msg) {
 		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
@@ -178,8 +179,8 @@ public class Raft implements Runnable, NetworkListener {
 					newTask.setComparePayloads(msg.getPayload());
 					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
-					for(ChatMessage m : messageCache) {
-						if(m.getId() == ChatMessage.chatMessageStringToObject(msg.getPayload()).getId()) {
+					for (ChatMessage m : messageCache) {
+						if (m.getId() == ChatMessage.chatMessageStringToObject(msg.getPayload()).getId()) {
 							messageCache.remove(m);
 						}
 					}
@@ -190,29 +191,30 @@ public class Raft implements Runnable, NetworkListener {
 			}
 		}
 	}
-	
 
 	public void gatherWriteResponses(Message msg) {
-		
+
 	}
 
 	public void cacheTheMessage(Message msg) {
 		messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-		Message response = new Message(thisClient,msg.getPayload(),MessageType.MessageCached);
+		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageCached);
 		sender.sendMessage(response, Phonebook.getLeader());
 	}
+
 	public void writeTheMesssage(Message msg) {
-		ChatMessage extract=ChatMessage.chatMessageStringToObject(msg.getPayload());
+		ChatMessage extract = ChatMessage.chatMessageStringToObject(msg.getPayload());
 		FileSyncManager.addMessage(extract);
-		for(ChatMessage m : messageCache) {
-			if(m.getId() == extract.getId()) {
+		for (ChatMessage m : messageCache) {
+			if (m.getId() == extract.getId()) {
 				messageCache.remove(m);
 			}
 		}
-		FileSyncManager.save(thisClient.getIp()+"-"+thisClient.getPort());
-		Message response = new Message(thisClient,msg.getPayload(),MessageType.MessageWritten);
+		FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
+		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageWritten);
 		sender.sendMessage(response, Phonebook.getLeader());
 	}
+
 	// ##############################################################
 	//
 	// --------------- Voting ----------------------------
@@ -254,8 +256,7 @@ public class Raft implements Runnable, NetworkListener {
 			didVote = true;
 			term = Integer.parseInt(msg.getPayload(), 10);
 			lastVote = msg.getSenderAsClient();
-			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote); // TODO: BEngin wollte sender bei
-			// message fixen,oder ?
+			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote);
 			sender.sendMessage(ballot, msg.getSenderAsClient());
 		}
 		restartElectionTimeout();
@@ -280,6 +281,32 @@ public class Raft implements Runnable, NetworkListener {
 
 	private void manageTasklist() {
 
+	}
+
+	private void twoLeaders() {
+		twoLeaders = true; // TODO: Block everything is this is set
+		Message konter = new Message(thisClient, "1" + term + "-" + thisClient.getIp() + "-" + thisClient.getPort(),
+				MessageType.ResolveTwoLeaders);
+
+	}
+
+	private void resolveTwoLeaders(Message msg) {
+		int msglvl = Integer.parseInt(msg.getPayload().split("\\,")[0], 10);
+		switch (msglvl) {
+		case 1:
+			
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+		case 4:
+			break;
+		default:
+
+			break;
+
+		}
 	}
 
 	private void addTask(AwaitingResponse task) {
@@ -331,60 +358,68 @@ public class Raft implements Runnable, NetworkListener {
 
 	private void heartbeat() {
 		checkIfMessageInPipline();
-		if (q.isEmpty()) {
+		if (q.isEmpty() || twoLeaders) {
 			sendNormalHeartbeat();
 		} else {
 			Message nextMessage = q.poll();
-			if (nextMessage.getSenderAsClient() == thisClient) {
-				// broadcasts
-			} else {
-				// single sends
-			}
+			boolean broadcast = true;
+			Client reciepient = null;
 			switch (nextMessage.getType()) {
-			case AlreadyVoted:
-				// Do nothing
-				// delete TAsk
-				break;
 			case Heartbeat:
-				// TODO: Two LeaderS Problem should not occur
-				break;
-			case IAmTheSenat:
+				broadcast = true;
 
 				break;
-			case MessageCached:
-				break;
+//			case MessageCached:
+//				break;
 			case NewClientInPhonebookSyncronizeWithAllClients:
+				broadcast = true;
 				break;
-			case NewMessageForwardedToLeader:
-				break;
+//			case NewMessageForwardedToLeader:
+//				break;
 			case NewMessageToCache:
-				break;
-			case RequestActiveClientsListFromAnotherNode:
-				break;
-			case RequestFullMessageHistoryFromAnotherNode:
-				break;
-			case RequestVoteForMe:
-				// payload = payload that is returned with VOTE
-				break;
-			case Vote:
-				break;
-			case WannaJoin:
-				break;
-			case WhichPort:
+				broadcast = true;
 				break;
 			case WriteMessage:
+				broadcast = true;
 				break;
-			case HeartbeatResponse:
-				break;
+//			case ReadyForRaft:
+//
+//				break;
+//			case RequestActiveClientsListFromAnotherNode:
+//				//unused
+//				break;
+//			case RequestFullMessageHistoryFromAnotherNode:
+//				//unused
+//				break;
+//			case RequestVoteForMe:
+//				 payload = payload that is returned with VOTE
+//				break;
+//			case Vote:
+//				break;
+//			case WannaJoin:
+//				break;
+//			case WhichPort:
+//				break;
+////			case AlreadyVoted:
+////			// Do nothing
+////			// delete TAsk
+//			break;
+//			case HeartbeatResponse:
+//				break;
 			default:
 				break;
 
+			}
+			if (broadcast) {
+				sender.broadcastMessage(nextMessage);
+			} else {
+				sender.sendMessage(nextMessage, reciepient);
 			}
 		}
 	}
 
 	public void sendNormalHeartbeat() {
-		String payload = "test";
+		String payload = thisClient.getIp() + "-" + thisClient.getPort() + "-" + term;
 		Message heartbeat = new Message(thisClient, payload, MessageType.Heartbeat);
 		sender.broadcastMessage(heartbeat);
 	}
@@ -464,6 +499,12 @@ public class Raft implements Runnable, NetworkListener {
 			if (role != 2) {
 				restartElectionTimeout();
 			}
+			if (role == 2) {
+				// if event is triggered do not trigger again
+				if (!twoLeaders) {
+					twoLeaders();
+				}
+			}
 			break;
 		case MessageCached:
 			gatherCacheResponses(message);
@@ -489,8 +530,34 @@ public class Raft implements Runnable, NetworkListener {
 			newLeaderChosen(message.getSenderAsClient());
 			break;
 		case ReadyForRaft:
-			// broadcast Phonebook
+			if (role == 2) {
+				Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
+						MessageType.NewClientInPhonebookSyncronizeWithAllClients);
+				q.add(newBroadcastSyncPhonebook);
+			} else {
+				Phonebook.importPhonebook(message.getPayload());
+			}
 			break;
+		case HeartbeatResponse:
+			break;
+		case MessageWritten:
+			break;
+		case NewClientInPhonebookSyncronizeWithAllClients:
+			break;
+		case RequestActiveClientsListFromAnotherNode:
+			break;
+		case RequestFullMessageHistoryFromAnotherNode:
+			break;
+		case ResolveTwoLeaders:
+			resolveTwoLeaders(message);
+			break;
+		case WannaJoin:
+			break;
+		case WhichPort:
+			break;
+		default:
+			break;
+
 		}
 	}
 

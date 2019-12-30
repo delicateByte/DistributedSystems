@@ -17,5 +17,6 @@ public enum MessageType {
 	WhichPort, 	//request from joiner to leader
 	HeartbeatResponse,	
 	ReadyForRaft,
-	MessageWritten
+	MessageWritten,
+	ResolveTwoLeaders
 }
