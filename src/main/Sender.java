@@ -12,7 +12,6 @@ public class Sender implements Runnable {
     private BufferedReader in;
 
     public Client getLeader() {
-    	//TODO: Gibt den Leader in der COntacts Table zurück
     	Client client = new Client("127.0.0.1", 12345);
     	return client;
     }
