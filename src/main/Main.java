@@ -21,6 +21,7 @@ public class Main{
 		
 		if (args.length == 1) {
 			Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[0]));
+			FileSyncManager.save(me.getIp() + "-" + me.getPort());
 			Phonebook.addNewNode(me);
 
 			// networking
@@ -66,6 +67,7 @@ public class Main{
 			
 			//setup with new port
 			me.setPort(port);
+			FileSyncManager.save(me.getIp() + "-" + me.getPort());
 			Phonebook.addNewNode(me);
 			Phonebook.addNewNode(leader);
 			Phonebook.newLeader(leader);
