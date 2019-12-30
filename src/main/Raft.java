@@ -117,8 +117,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	public void newMessageForwardedToLeader(Message msg) {
 		ChatMessage cMessage = ChatMessage.chatMessageStringToObject(msg.getPayload());
-		if(!debug) {
-			System.out.println(msg.getPayload());
+		if(debug) {
+			System.out.println(msg.getPayload()+"in MessageForward");
 		}
 		cMessage.setId(idCounter);
 		idCounter++;
@@ -135,7 +135,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		if (role == 2 && newMessage && !pipelineEmpty && id < idPipeline && !twoLeaders
 				|| role == 2 && newMessage && pipelineEmpty && !twoLeaders) {
 			//####################################################
-			if (Phonebook.countPhonebookEntries() < 2) {
+			if (Phonebook.countPhonebookEntries() == 1) {
 				newMessage = false;
 					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
@@ -424,8 +424,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private void addBroadcastResponseTask(AwaitingResponse task) {
 		for (Client c : phonebook.getFullPhonebook()) {
-			task.setResponder(c);
-			addTask(task);
+			if(c.getPort() != thisClient.getPort() || c.getIp() != thisClient.getIp() && c.getPort() == thisClient.getPort() ) {
+				task.setResponder(c);
+				addTask(task);
+			}
+
 		}
 	}
 
@@ -658,7 +661,14 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			}
 			break;
 		case MessageCached:
+			if (role == 2) {
+				gatherCacheResponses(message);
+				if (!twoLeaders) {
+					twoLeaders(message.getSenderAsClient());
+				}
+			} else {
 
+			}
 			break;
 		case NewMessageForwardedToLeader:
 			if (role == 2) {
@@ -669,14 +679,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			}
 			break;
 		case NewMessageToCache:
-			if (role == 2) {
-				gatherCacheResponses(message);
-				if (!twoLeaders) {
-					twoLeaders(message.getSenderAsClient());
-				}
-			} else {
 
-			}
 			break;
 		case RequestVoteForMe:
 			if (role == 2) {
