@@ -749,12 +749,17 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		if(role==2) {
 			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(), System.currentTimeMillis());
 	        String payload = ChatMessage.chatMessageObjectToString(msg);
+	        if(debug) {
+	        	System.out.println(payload);
+	        }
 	        Message m = new Message(thisClient,payload,MessageType.NewMessageForwardedToLeader);
 	        newMessageForwardedToLeader(m);
 		}else {
 			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(), System.currentTimeMillis());
 	        String payload = ChatMessage.chatMessageObjectToString(msg);
-	        
+	        if(debug) {
+	        	System.out.println(payload);
+	        }
 	        sender.sendMessageAutoRetry(new Message(thisClient, payload, MessageType.NewMessageForwardedToLeader), Phonebook.getLeader(), 10, "error message ausdenken");
 		}
 		return false;
