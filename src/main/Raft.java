@@ -1,11 +1,11 @@
 package main;
 
 import java.io.PrintWriter;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
@@ -202,7 +202,11 @@ public class Raft implements Runnable, NetworkListener {
 	public void cacheTheMessage(Message msg) {
 		messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageCached);
-		sender.sendMessage(response, Phonebook.getLeader());
+		try {
+			sender.sendMessage(response, Phonebook.getLeader());
+		} catch (Exception e) {
+			System.out.println("[RAFT] ERROR-1");
+		}
 	}
 
 	public void writeTheMesssage(Message msg) {
@@ -215,7 +219,11 @@ public class Raft implements Runnable, NetworkListener {
 		}
 		FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageWritten);
-		sender.sendMessage(response, Phonebook.getLeader());
+		try {
+			sender.sendMessage(response, Phonebook.getLeader());
+		} catch (Exception e) {
+			
+		}
 	}
 
 	// ##############################################################
@@ -264,10 +272,11 @@ public class Raft implements Runnable, NetworkListener {
 			term = Integer.parseInt(msg.getPayload(), 10);
 			lastVote = msg.getSenderAsClient();
 			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote);
-			sender.sendMessage(ballot, msg.getSenderAsClient());
+			sender.sendMessageAutoRetry(ballot, msg.getSenderAsClient(), 10, "Vote failed");
 		}
 		restartElectionTimeout();
 	}
+	
 
 	public void resetVote() {
 		role = 0;
@@ -305,8 +314,7 @@ public class Raft implements Runnable, NetworkListener {
 		Message konter = new Message(thisClient,
 				"1" + "-" + term + "-" + thisClient.getIp() + "-" + thisClient.getPort(),
 				MessageType.ResolveTwoLeaders);
-		sender.sendMessage(konter, c);
-
+		sender.sendMessageAutoRetry(konter, c, 10, "Konter failed");
 	}
 
 	private void resolveTwoLeaders(Message msg) {
@@ -319,11 +327,11 @@ public class Raft implements Runnable, NetworkListener {
 				Message konter = new Message(thisClient,
 						"2" + ":" + term + ":" + thisClient.getIp() + ":" + thisClient.getPort(),
 						MessageType.ResolveTwoLeaders);
-				sender.sendMessage(konter, msg.getSenderAsClient());
+				sender.sendMessageAutoRetry(konter, msg.getSenderAsClient(), 10, "Step down request failed ");
 			} else if (Integer.parseInt(msg.getPayload().split(":")[1], 10) >= term) {
 				Message konter = new Message(thisClient, "4" + Phonebook.exportPhonebook(),
 						MessageType.ResolveTwoLeaders);
-				sender.sendMessage(konter, msg.getSenderAsClient());
+				sender.sendMessageAutoRetry(konter, msg.getSenderAsClient(), 10, "Stepping down notification failed");
 				leaderStepDown(msg.getSenderAsClient());
 
 			}
@@ -331,7 +339,7 @@ public class Raft implements Runnable, NetworkListener {
 		case 2:
 			leaderStepDown(msg.getSenderAsClient());
 			Message konter = new Message(thisClient, "4" + Phonebook.exportPhonebook(), MessageType.ResolveTwoLeaders);
-			sender.sendMessage(konter, msg.getSenderAsClient());
+			sender.sendMessageAutoRetry(konter, msg.getSenderAsClient(), 10, "Phonebook could not me shared");
 			break;
 //		case 3:
 //			Message konter = new Message(thisClient, "4"+Phonebook.exportPhonebook(),
@@ -343,7 +351,7 @@ public class Raft implements Runnable, NetworkListener {
 			Phonebook.importPhonebook(msg.getPayload().substring(1, msg.getPayload().length()));
 			Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient.getIp() +"-"+thisClient.getPort()+ "-" + "Leader",
 					MessageType.IAmTheSenat);
-			sender.broadcastMessage(IAmTheSenate);
+			sender.broadcastMessage(IAmTheSenate, true, "One client did not approve of my leadership (not received). Execute order 66.");
 			Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
 					MessageType.NewClientInPhonebookSyncronizeWithAllClients);
 			q.offer(newBroadcastSyncPhonebook);
@@ -464,9 +472,14 @@ public class Raft implements Runnable, NetworkListener {
 			}
 			System.out.println("send new Message"+nextMessage.getType());
 			if (broadcast) {
-				sender.broadcastMessage(nextMessage);
+				sender.broadcastMessage(nextMessage, true, "Heartbeat could not be sent to a client");
 			} else {
-				sender.sendMessage(nextMessage, reciepient);
+				try {
+					sender.sendMessage(nextMessage, reciepient);
+				} catch (Exception e) {
+					q.offer(nextMessage);
+					System.out.println("[RAFT] Heartbeat could not be sent");
+				}
 			}
 		}
 	}
@@ -474,7 +487,7 @@ public class Raft implements Runnable, NetworkListener {
 	public void sendNormalHeartbeat() {
 		String payload = thisClient.getIp() + "-" + thisClient.getPort() + "-" + term;
 		Message heartbeat = new Message(thisClient, payload, MessageType.Heartbeat);
-		sender.broadcastMessage(heartbeat);
+		sender.broadcastMessage(heartbeat, false, "One or more clients did not receive heartbeat");
 	}
 	// ##############################################################
 	//
@@ -503,7 +516,7 @@ public class Raft implements Runnable, NetworkListener {
 		if(role!=2) {
 		Message voteForMeMessage = new Message(thisClient,
 				"Vote for me I am the best and I am better the AfD-N0de", MessageType.RequestVoteForMe);
-		sender.broadcastMessage(voteForMeMessage);
+		sender.broadcastMessage(voteForMeMessage, false, "VoteForMe could not be broadcasted to all");
 		restartElectionTimeout();
 		}
 
@@ -537,7 +550,7 @@ public class Raft implements Runnable, NetworkListener {
 		heartbeatTimer.scheduleAtFixedRate(heartbeat, 2, 35);
 		Message IAmTheSenate = new Message(thisClient, term + "-" + thisClient.getIp()+"-"+thisClient.getPort() + "-" + "Leader",
 				MessageType.IAmTheSenat);
-		sender.broadcastMessage(IAmTheSenate);
+		sender.broadcastMessage(IAmTheSenate, true, "Could not tell this client that I am senate");
 	
 	}
 
@@ -583,7 +596,7 @@ public class Raft implements Runnable, NetworkListener {
 			if (role == 2) {
 				newMessageForwardedToLeader(message);
 			} else {
-				sender.sendMessage(message, Phonebook.getLeader());
+				sender.sendMessageAutoRetry(message, Phonebook.getLeader(), 10, "Message could not be forwarded to leader");
 			}
 			break;
 		case NewMessageToCache:
@@ -600,7 +613,11 @@ public class Raft implements Runnable, NetworkListener {
 			if (role == 2) {
 				Message hb = new Message(thisClient, term + "-" + this.thisClient.getIp()+"-"+thisClient.getPort() + "-" + "Leader",
 						MessageType.Heartbeat);
-				sender.sendMessage(hb,message.getSenderAsClient() );
+				try {
+					sender.sendMessage(hb,message.getSenderAsClient());
+				} catch (Exception e) {
+					System.out.println("[RAFT] 'I am already leader' message failed");
+				}
 			} else {
 
 			}

@@ -45,14 +45,17 @@ public class Main {
 			Client friend = new Client(args[0], Integer.parseInt(args[1]));
 			Message whichPort = new Message(me, "pleeeeease", MessageType.WhichPort);
 			System.out.println("Sending join request to friend " + friend.getIp() + "-" + friend.getPort());
-			String leaderInfo = sender.sendMessage(whichPort, friend);
+			String leaderInfo = sender.sendMessageAutoRetry(whichPort, friend, 10, "could not ask for leader info");
 			System.out.println("leader-response: " + leaderInfo);
 
 			// contact leader for a free port
 			while(leaderInfo.contentEquals("no leader, try later")) {
 				try {
 					Thread.sleep(1000);
-					leaderInfo = sender.sendMessage(whichPort, friend);
+					try {
+						leaderInfo = sender.sendMessage(whichPort, friend);
+					} catch (Exception e) {
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -60,7 +63,7 @@ public class Main {
 			
 			Client leader = new Client(leaderInfo.split("-")[0], Integer.parseInt(leaderInfo.split("-")[1]));
 			Message wannaJoin = new Message(me, "pleeeeease", MessageType.WannaJoin);
-			int port = Integer.parseInt(sender.sendMessage(wannaJoin, leader));
+			int port = Integer.parseInt(sender.sendMessageAutoRetry(wannaJoin, leader, 10, "could not ask for free port"));
 			System.out.println("port-response: " + port);
 			
 			//setup with new port
@@ -75,7 +78,7 @@ public class Main {
 			
 			//send ich bin ready
 			Message ready = new Message(me, "", MessageType.ReadyForRaft);
-			sender.sendMessage(ready, leader);
+			sender.sendMessageAutoRetry(ready, leader, 10, "I am ready could not be sent");
 			
 			
 			// raft

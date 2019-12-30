@@ -40,13 +40,31 @@ public class MessageSender {
 		}
 	}
 	
+	public String sendMessageAutoRetry(Message message, Client client, int maxRetries, String error) {
+		return sendAgain(message, client, 0, maxRetries, error);
+	}
+	
+	private String sendAgain(Message msg, Client target, int i, int maxRetries, String error) {
+		i++;
+		if(i > maxRetries){
+			System.out.println("[RAFT] " + error);
+			return "error";
+		}
+		try {
+			return this.sendMessage(msg, target);
+		} catch (Exception e) {
+			return sendAgain(msg, target, i, maxRetries, error);
+		}
+	}
+
+	
 	/**
 	 * Sends a network message to all participants
 	 * @param message the Message object that should be sent
 	 * @return returns if sending was error free (no confirmation if 
 	 * the message was delivered successfully). 
 	 */
-	public List<Client> broadcastMessage(Message message) {
+	public List<Client> broadcastMessage(Message message, boolean retry, String error) {
 		List<Client> errorClients = new ArrayList<Client>();
 		for(Client c : Phonebook.getFullPhonebook()) {
 			if(!c.getIp().equals(message.getSenderAsClient().getIp()) || c.getPort() != message.getSenderAsClient().getPort()) {
@@ -60,6 +78,16 @@ public class MessageSender {
 		//MessageUtils.printMessage(message);
 		if(message.getType()!=MessageType.Heartbeat) {
 			MessageUtils.printMessage(message);
+		}
+		
+		if(retry) {
+			for(Client c : errorClients) {
+				this.sendMessageAutoRetry(message, c, 10, error);
+			}
+		}else {
+			if(errorClients.size() != 0) {
+				System.out.println("[RAFT] " + error);
+			}
 		}
 		return errorClients;
 	}

@@ -31,7 +31,7 @@ public class NetworkingTests implements NetworkListener {
 
 		MessageSender out = new MessageSender();
 		everythingOkay = false;
-		out.sendMessage(message, new Client("localhost", 3503));
+		out.sendMessageAutoRetry(message, new Client("localhost", 3503), 10, "test failed");
 
 		try {
 			Thread.sleep(3000);
