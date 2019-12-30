@@ -65,14 +65,19 @@ public class MessageSender {
 	 * the message was delivered successfully). 
 	 */
 	public List<Client> broadcastMessage(Message message, boolean retry, String error) {
-		List<Client> errorClients = new ArrayList<Client>();
 		for(Client c : Phonebook.getFullPhonebook()) {
 			if(!c.getIp().equals(message.getSenderAsClient().getIp()) || c.getPort() != message.getSenderAsClient().getPort()) {
-				try {
-					sendMessage(message, c);
-				}catch(Exception e) {
-					errorClients.add(c);
-				}
+				Thread sender = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						if(retry) {
+							sendMessageAutoRetry(message, c, 3, error);
+						} else {
+							sendMessageAutoRetry(message, c, 1, error);
+						}
+					}
+				});
+				sender.start();
 			}
 		}
 		//MessageUtils.printMessage(message);
@@ -80,16 +85,6 @@ public class MessageSender {
 			System.out.println("Send Message--------------");
 
 			MessageUtils.printMessage(message);
-		}
-		
-		if(retry) {
-			for(Client c : errorClients) {
-				this.sendMessageAutoRetry(message, c, 10, error);
-			}
-		}else {
-			if(errorClients.size() != 0) {
-				System.out.println("[RAFT] " + error);
-			}
 		}
 		return errorClients;
 	}
