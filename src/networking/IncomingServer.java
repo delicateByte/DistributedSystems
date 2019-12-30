@@ -45,7 +45,7 @@ public class IncomingServer {
 										infos[1].replace("\\;", ";"),
 										MessageType.valueOf(infos[2]));
 								PrintWriter writer = new PrintWriter(connector.getOutputStream());
-								MessageUtils.printMessage(message);
+							//	MessageUtils.printMessage(message);
 								for(NetworkListener l : listeners) {
 									l.onMessageReceived(message, writer);
 								}

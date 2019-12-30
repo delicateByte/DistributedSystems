@@ -9,6 +9,7 @@ import java.util.List;
 
 import main.Client;
 import main.Message;
+import util.MessageUtils;
 
 public class MessageSender {
 	
@@ -50,6 +51,7 @@ public class MessageSender {
 				sendMessage(message, c);
 			}
 		}
+		//MessageUtils.printMessage(message);
 		return true;
 	}
 }
