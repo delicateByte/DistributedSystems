@@ -9,6 +9,8 @@ import java.util.List;
 
 import main.Client;
 import main.Message;
+import main.MessageType;
+import util.MessageUtils;
 
 public class MessageSender {
 	
@@ -56,6 +58,9 @@ public class MessageSender {
 			}
 		}
 		//MessageUtils.printMessage(message);
+		if(message.getType()!=MessageType.Heartbeat) {
+			MessageUtils.printMessage(message);
+		}
 		return errorClients;
 	}
 }
