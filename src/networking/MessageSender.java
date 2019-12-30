@@ -50,7 +50,6 @@ public class MessageSender {
 				sendMessage(message, c);
 			}
 		}
-		System.out.println("broadcasted"+message.getType());
 		return true;
 	}
 }

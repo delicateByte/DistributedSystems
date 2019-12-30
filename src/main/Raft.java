@@ -497,7 +497,7 @@ public class Raft implements Runnable, NetworkListener {
 		votes = 1;
 //		System.out.println("Voted for ME");
 		checkVote();
-		Message voteForMeMessage = new Message("192.168.178.51-3538",
+		Message voteForMeMessage = new Message(thisClient,
 				"Vote for me I am the best and I am better the AfD-N0de", MessageType.RequestVoteForMe);
 		sender.broadcastMessage(voteForMeMessage);
 		restartElectionTimeout();
@@ -547,7 +547,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
-		System.out.println("New Message of Type "+message.getType());
+		System.out.println("New Message of Type "+ message.getType());
 		switch (message.getType()) {
 		case AlreadyVoted:
 			break;
