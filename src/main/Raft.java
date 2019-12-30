@@ -270,6 +270,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	public void resetVote() {
 		role = 0;
+		syncRoleWithPhonebook();
 		votes = 0;
 		didVote = false;
 	}
@@ -282,6 +283,7 @@ public class Raft implements Runnable, NetworkListener {
 	private void leaderStepDown(Client c) {
 		System.out.println("Delected Leader");
 		role = 0;
+		syncRoleWithPhonebook();
 		Phonebook.newLeader(c);
 		taskList.clear();
 		heartbeatTimer.cancel();
@@ -478,15 +480,17 @@ public class Raft implements Runnable, NetworkListener {
 
 	// after Recieving a I am Your Leader MEssage
 	public void newLeaderChosen(Client clnt) {
-		phonebook.newLeader(clnt);
+		Phonebook.newLeader(clnt);
 		if(role !=0) {
 			role =0;
+			syncRoleWithPhonebook();
 		}
 	}
 
 	private void becomeCanidate() {
 		resetVote();
 		role = 1;
+		syncRoleWithPhonebook();
 		didVote = true;
 		term = term + 1;
 		votes = 1;
@@ -517,6 +521,7 @@ public class Raft implements Runnable, NetworkListener {
 	private void becomeLeader() {
 		System.out.println("Elected Leader");
 		role = 2;
+		syncRoleWithPhonebook();
 		taskList.clear();
 		stopElectionTimeout();
 		Phonebook.newLeader(thisClient);
@@ -550,6 +555,7 @@ public class Raft implements Runnable, NetworkListener {
 			if (role != 2) {
 				restartElectionTimeout();
 				role=0;
+				syncRoleWithPhonebook();
 			}
 			if (role == 2) {
 				// if event is triggered do not trigger again

@@ -121,7 +121,7 @@ public class Phonebook {
 			teilTeilStrings.add(c.getIp());
 			teilTeilStrings.add(""+c.getPort());
 			teilTeilStrings.add(""+c.getRights());
-			teilTeilStrings.add(c.getName().replace(";", "\\;").replace("-", "\\-"));
+//			teilTeilStrings.add(c.getName().replace(";", "\\;").replace("-", "\\-"));
 			teilStrings.add(String.join(";", teilTeilStrings));
 		}
 		
@@ -135,7 +135,7 @@ public class Phonebook {
 			String[] clientInfos = teilString.split("(?<!\\\\);");
 			Client client = new Client(clientInfos[0], Integer.parseInt(clientInfos[1]));
 			client.setRights(Integer.parseInt(clientInfos[2]));
-			client.setName(clientInfos[3].replace("\\;", ";").replace("\\-", "-"));
+//			client.setName(clientInfos[3].replace("\\;", ";").replace("\\-", "-"));
 			newPhonebook.add(client);
 		}
 		return mergeTwoPhonebooks(phonebook, newPhonebook);
