@@ -22,7 +22,7 @@ public class MessageSender {
 	 * (ip + "-" + port)
 	 * @return returns a response
 	 */
-	public String sendMessage(Message message, Client client) {;
+	public String sendMessage(Message message, Client client) {
 		try {
 			Socket socket = new Socket(client.getIp(), client.getPort());
 			BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
