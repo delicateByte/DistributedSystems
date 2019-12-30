@@ -12,6 +12,7 @@ import java.util.List;
 
 import main.Message;
 import main.MessageType;
+import util.MessageUtils;
 
 public class IncomingServer {
 	private int port;
@@ -44,6 +45,7 @@ public class IncomingServer {
 										infos[1].replace("\\;", ";"),
 										MessageType.valueOf(infos[2]));
 								PrintWriter writer = new PrintWriter(connector.getOutputStream());
+								MessageUtils.printMessage(message);
 								for(NetworkListener l : listeners) {
 									l.onMessageReceived(message, writer);
 								}
