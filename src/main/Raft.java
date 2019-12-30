@@ -530,7 +530,7 @@ public class Raft implements Runnable, NetworkListener {
 		Message IAmTheSenate = new Message(thisClient, term + "-" + this.thisClient.getIp()+"-"+thisClient.getPort() + "-" + "Leader",
 				MessageType.IAmTheSenat);
 		sender.broadcastMessage(IAmTheSenate);
-
+	
 	}
 
 	public void stopHeartbeat() {
@@ -553,6 +553,7 @@ public class Raft implements Runnable, NetworkListener {
 			break;
 		case Heartbeat:
 			if (role != 2) {
+				System.out.println("restart ELT");
 				restartElectionTimeout();
 				role=0;
 				syncRoleWithPhonebook();
