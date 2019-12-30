@@ -301,7 +301,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private long votingCycle() {
 		int random = (ThreadLocalRandom.current().nextInt(100, 150) + 150);
-		System.out.println(random);
 		return Long.valueOf(random);
 	}
 
