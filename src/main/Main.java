@@ -37,8 +37,8 @@ public class Main {
 			// raft
 			Raft myRaft = new Raft(me);
 			Thread raftThread = new Thread(myRaft);
-//			in.registerListener(myRaft);
-//			raftThread.start();
+			in.registerListener(myRaft);
+			raftThread.start();
 		} else if (args.length == 2) {
 			// ask friend for the leader id
 			Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[1]));
