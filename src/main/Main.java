@@ -37,8 +37,8 @@ public class Main {
 			// raft
 			Raft myRaft = new Raft(me);
 			Thread raftThread = new Thread(myRaft);
-			in.registerListener(myRaft);
-			raftThread.start();
+//			in.registerListener(myRaft);
+//			raftThread.start();
 		} else if (args.length == 2) {
 			// ask friend for the leader id
 			Client me = new Client(NetworkUtils.getIP(), Integer.parseInt(args[1]));
@@ -49,6 +49,15 @@ public class Main {
 			System.out.println("leader-response: " + leaderInfo);
 
 			// contact leader for a free port
+			while(leaderInfo.contentEquals("no leader, try later")) {
+				try {
+					Thread.sleep(1000);
+					leaderInfo = sender.sendMessage(whichPort, friend);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
 			Client leader = new Client(leaderInfo.split("-")[0], Integer.parseInt(leaderInfo.split("-")[1]));
 			Message wannaJoin = new Message(me, "pleeeeease", MessageType.WannaJoin);
 			int port = Integer.parseInt(sender.sendMessage(wannaJoin, leader));
