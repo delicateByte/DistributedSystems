@@ -16,10 +16,10 @@ class FileSyncTests {
 	void saveAndLoad() {
 		// initialize and add arbitrary messages
 		FileSyncManager.initBlank();
-		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip|sum xyz", "192.168.178.51-2314"));
-		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip-sum xyz", "192.168.178.52-2314"));
-		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip-sum x|yz", "192.168.178.51-2314"));
-		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ipsum xyz", "192.168.178.51-2315"));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip|sum xyz", "192.168.178.51-2314", System.currentTimeMillis()));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip-sum xyz", "192.168.178.52-2314", System.currentTimeMillis()));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ip-sum x|yz", "192.168.178.51-2314", System.currentTimeMillis()));
+		FileSyncManager.addMessage(new ChatMessage(3, "Lorem Ipsum xyz", "192.168.178.51-2315", System.currentTimeMillis()));
 		String id = "192.168.178.51-2314";
 		List<ChatMessage> originalMessages = FileSyncManager.getMessages();
 
