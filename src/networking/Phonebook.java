@@ -8,7 +8,7 @@ import main.Client;
 
 public class Phonebook {
 	// Contacts table
-	private static ArrayList<Client> phonebook = new ArrayList<Client>();
+	private static List<Client> phonebook = new ArrayList<Client>();
 
 	public static Client getLeader() {
 		for(Client c : phonebook) {
@@ -100,7 +100,7 @@ public class Phonebook {
 		}
 	}
 	
-	public static ArrayList<Client> getFullPhonebook() {
+	public static List<Client> getFullPhonebook() {
 		return phonebook;
 	}
 	
@@ -112,6 +112,22 @@ public class Phonebook {
 	public static List<Client> mergeTwoPhonebooks(List<Client> pb1,List<Client> pb2) {
 		pb1.addAll(pb2);
 		return pb1;
+	}
+	
+	public static void removeDuplicates() {
+		List<Client> temp = new ArrayList<Client>();
+		for(Client c : phonebook) {
+			boolean adding = true;
+			for(Client c2 : temp) {
+				if(c2.getPort() == c.getPort() && c2.getIp().contentEquals(c.getIp())) {
+					adding = false;
+					break;
+				}
+			}
+			if(adding)
+				temp.add(c);
+		}
+		phonebook = temp;
 	}
 	
 	public static String exportPhonebook() {
