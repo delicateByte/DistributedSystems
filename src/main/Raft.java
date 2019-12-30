@@ -258,8 +258,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener{
 				}}
 		};
 		electionTimeout = new Timer("Raftcycle-" + cycle);
-		//System.out.println("New Timer" + "Raftcycle-" + cycle);
-		electionTimeout.scheduleAtFixedRate(raftCycleReset, 40, votingCycle());
+		System.out.println("New Timer" + "Raftcycle-" + cycle);
+		//electionTimeout.scheduleAtFixedRate(raftCycleReset, 40, votingCycle());
 		raftCycleManager =raftCycleReset;
 	}
 	
