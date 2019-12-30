@@ -53,7 +53,7 @@ public class Raft implements Runnable, NetworkListener {
 	Timer heartbeatTimer = new Timer("Heartbeat");
 	TimerTask heartbeat = new TimerTask() {
 		public void run() {
-			//System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
+//			System.out.println("Heartbeat"+thisClient.getIp()+":"+thisClient.getPort());
 			if (role != 2) {
 				heartbeatTimer.cancel();
 			}
@@ -168,7 +168,7 @@ public class Raft implements Runnable, NetworkListener {
 		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
 		if (taskList.contains(cmp)) {
-			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload()); 
+			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload());
 			int msgId = ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
 			if (messageResponseAggregator.containsKey(msgId)) {
 				messageResponseAggregator.put(msgId, messageResponseAggregator.get(msgId) + 1);
@@ -310,7 +310,7 @@ public class Raft implements Runnable, NetworkListener {
 
 	private void resolveTwoLeaders(Message msg) {
 		int msglvl = Integer.parseInt(msg.getPayload().substring(0, 2));
-		twoLeaders = true; 
+		twoLeaders = true;
 		switch (msglvl) {
 		case 1:
 
@@ -351,7 +351,7 @@ public class Raft implements Runnable, NetworkListener {
 			// TODO : MAYBE send Cache to every Node
 			twoLeaders = false;
 			break;
-			
+
 		default:
 
 			break;
@@ -522,8 +522,9 @@ public class Raft implements Runnable, NetworkListener {
 	private void becomeLeader() {
 		System.out.println("Elected Leader");
 		role = 2;
+		syncRoleWithPhonebook();
 		taskList.clear();
-  		stopElectionTimeout();
+		stopElectionTimeout();
 		Phonebook.newLeader(thisClient);
 		heartbeatTimer = new Timer("Heartbeat-" + term);
 		heartbeatTimer.scheduleAtFixedRate(heartbeat, 2, 35);
@@ -537,7 +538,7 @@ public class Raft implements Runnable, NetworkListener {
 		heartbeatTimer.cancel();
 	}
 	public void gatherHeartbeatResponse(Message m) {
-		
+
 	}
 	// ##############################################################
 	//
@@ -565,7 +566,7 @@ public class Raft implements Runnable, NetworkListener {
 			}
 			break;
 		case MessageCached:
-	
+
 			break;
 		case NewMessageForwardedToLeader:
 			if (role == 2) {
@@ -613,10 +614,10 @@ public class Raft implements Runnable, NetworkListener {
 				if (!twoLeaders) {
 				twoLeaders(message.getSenderAsClient());
 			}
-				
+
 			}else {
 				newLeaderChosen(message.getSenderAsClient());
-				
+
 			}
 			break;
 		case ReadyForRaft:
@@ -642,7 +643,6 @@ public class Raft implements Runnable, NetworkListener {
 					twoLeaders(message.getSenderAsClient());
 				}
 			}else {
-				System.out.println("Importing Phonebook");
 				Phonebook.importPhonebook(message.getPayload());
 			}
 			break;
@@ -650,9 +650,9 @@ public class Raft implements Runnable, NetworkListener {
 //			break;
 		case RequestFullMessageHistoryFromAnotherNode:
 			if(role ==2){
-				
+
 			}else {
-				//TODO: BENGIN wollen wir einen ganzen Chache Transfer ?benötige dann FileSyncMessanger import / export functions
+				//TODO: BENGIN wollen wir einen ganzen Chache Transfer ?benï¿½tige dann FileSyncMessanger import / export functions
 			}
 			break;
 		case ResolveTwoLeaders:

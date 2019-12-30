@@ -11,7 +11,7 @@ import main.Client;
 import main.Message;
 
 public class MessageSender {
-	
+
 	/**
 	 * Sends a network message to the recipient
 	 * @param sender the sender in this form: 192.168.178.51-3538
@@ -40,12 +40,12 @@ public class MessageSender {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Sends a network message to all participants
 	 * @param message the Message object that should be sent
-	 * @return returns if sending was error free (no confirmation if 
-	 * the message was delivered successfully). 
+	 * @return returns if sending was error free (no confirmation if
+	 * the message was delivered successfully).
 	 */
 	public boolean broadcastMessage(Message message) {
 		for(Client c : Phonebook.getFullPhonebook()) {
