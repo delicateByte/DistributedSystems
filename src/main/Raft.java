@@ -117,6 +117,9 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	public void newMessageForwardedToLeader(Message msg) {
 		ChatMessage cMessage = ChatMessage.chatMessageStringToObject(msg.getPayload());
+		if(!debug) {
+			System.out.println(msg.getPayload());
+		}
 		cMessage.setId(idCounter);
 		idCounter++;
 		int id = cMessage.getId();
@@ -131,33 +134,42 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		}
 		if (role == 2 && newMessage && !pipelineEmpty && id < idPipeline && !twoLeaders
 				|| role == 2 && newMessage && pipelineEmpty && !twoLeaders) {
-			newMessage = false;
-			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-			String payload = msg.getPayload();
-			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
-			messageResponseAggregator.put(extractId.getId(), 0); // Adds new Key-value pair to the map that checks how
-																	// many responses for a message have arrived
-			Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
-			q.offer(cacheMessage);
-			// sender.broadcastMessage(cacheMessage);
-			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
-			newTask.setComparePayloads(msg.getPayload());
-			addBroadcastResponseTask(newTask);
-		} else if (role == 2 && !newMessage) {
-			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-			String payload = msg.getPayload();
-			ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
-			messageResponseAggregator.put(extractId.getId(), 0);
-		} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline && !twoLeaders) {
-			newMessage = false;
-			String payload = msg.getPayload();
-			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
-			Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
-			q.offer(cacheMessage);
-			// sender.broadcastMessage(cacheMessage);
-			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
-			newTask.setComparePayloads(msg.getPayload());
-			addBroadcastResponseTask(newTask);
+			//####################################################
+			if (Phonebook.countPhonebookEntries() < 2) {
+				newMessage = false;
+					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
+				newMessage =true;
+			//#######################################################################################
+				} else {
+					newMessage = false;
+					messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+					String payload2 = msg.getPayload();
+					messageResponseAggregator.put(id, 1); // Adds new Key-value pair to the map that checks how
+															// many responses for a message have arrived
+					Message cacheMessage2 = new Message(thisClient, payload2, MessageType.NewMessageToCache);
+					q.offer(cacheMessage2);
+					// sender.broadcastMessage(cacheMessage);
+					AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
+					newTask.setComparePayloads(msg.getPayload());
+					addBroadcastResponseTask(newTask);
+				}
+			} else if (role == 2 && !newMessage) {
+				messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+				String payload = msg.getPayload();
+				ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
+				messageResponseAggregator.put(extractId.getId(), 0);
+			} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline && !twoLeaders) {
+				newMessage = false;
+				String payload = msg.getPayload();
+				ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
+				Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
+				q.offer(cacheMessage);
+				// sender.broadcastMessage(cacheMessage);
+				AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
+				newTask.setComparePayloads(msg.getPayload());
+				addBroadcastResponseTask(newTask);
+			
 		}
 	}
 
@@ -213,6 +225,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	}
 
+//TODO: MEssage Written delet from Tasklist
 	public void cacheTheMessage(Message msg) {
 		messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageCached);
@@ -776,21 +789,24 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	@Override
 	public boolean onMessageSend(String message) {
 		// TODO implement what happens when a message should be sent
-		if(role==2) {
-			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(), System.currentTimeMillis());
-	        String payload = ChatMessage.chatMessageObjectToString(msg);
-	        if(debug) {
-	        	System.out.println(payload);
-	        }
-	        Message m = new Message(thisClient,payload,MessageType.NewMessageForwardedToLeader);
-	        newMessageForwardedToLeader(m);
-		}else {
-			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(), System.currentTimeMillis());
-	        String payload = ChatMessage.chatMessageObjectToString(msg);
-	        if(debug) {
-	        	System.out.println(payload);
-	        }
-	        sender.sendMessageAutoRetry(new Message(thisClient, payload, MessageType.NewMessageForwardedToLeader), Phonebook.getLeader(), 10, "error message ausdenken");
+		if (role == 2) {
+			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(),
+					System.currentTimeMillis());
+			String payload = ChatMessage.chatMessageObjectToString(msg);
+			if (debug) {
+				System.out.println(payload);
+			}
+			Message m = new Message(thisClient, payload, MessageType.NewMessageForwardedToLeader);
+			newMessageForwardedToLeader(m);
+		} else {
+			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(),
+					System.currentTimeMillis());
+			String payload = ChatMessage.chatMessageObjectToString(msg);
+			if (debug) {
+				System.out.println(payload);
+			}
+			sender.sendMessageAutoRetry(new Message(thisClient, payload, MessageType.NewMessageForwardedToLeader),
+					Phonebook.getLeader(), 10, "Couldn't forward message");
 		}
 		return false;
 	}
