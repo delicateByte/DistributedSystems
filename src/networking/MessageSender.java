@@ -64,7 +64,7 @@ public class MessageSender {
 	 * @return returns if sending was error free (no confirmation if 
 	 * the message was delivered successfully). 
 	 */
-	public List<Client> broadcastMessage(Message message, boolean retry, String error) {
+	public void broadcastMessage(Message message, boolean retry, String error) {
 		for(Client c : Phonebook.getFullPhonebook()) {
 			if(!c.getIp().equals(message.getSenderAsClient().getIp()) || c.getPort() != message.getSenderAsClient().getPort()) {
 				Thread sender = new Thread(new Runnable() {
@@ -86,6 +86,5 @@ public class MessageSender {
 
 			MessageUtils.printMessage(message);
 		}
-		return errorClients;
 	}
 }
