@@ -74,14 +74,8 @@ public class FileSyncManager {
 	 * @param messages the arraylist that contains the messages
 	 */
 	private static void syncToFile(String identifier, List<ChatMessage> messages) {
-		if (bw == null) {
-			try {
-				bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}	
-		}
-		try {
+		try {	
+			bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
 			List<String> strings = new ArrayList<String>();
 			String messageString = "";
 			for(ChatMessage message : messages) {
@@ -97,15 +91,9 @@ public class FileSyncManager {
 	}
 
 	private static List<ChatMessage> syncFromFile(String identifier) {
-		if(br == null) {
-			try {
-				br = new BufferedReader(new FileReader(new File("./" + identifier + ".ciao")));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-		}
 		List<ChatMessage> messages = new ArrayList<ChatMessage>();
 		try {
+			br = new BufferedReader(new FileReader(new File("./" + identifier + ".ciao")));
 			String fileIn = br.readLine();
 			List<String> messageStrings = Arrays.asList(fileIn.split("(?<!\\\\)-"));
 			
