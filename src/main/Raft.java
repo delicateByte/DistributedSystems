@@ -86,6 +86,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		newMessage = true;
 		twoLeaders = false;
 		lastHeartbeat = 0;
+		term=0;
 	}
 
 	// EMPTY
@@ -252,9 +253,14 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			public void run() {
 				if (lastHeartbeat < (System.currentTimeMillis() - 300)) {
 					System.out.println("Executing TimerTask as Role:" + role);
-
+					
 					if (role != 2) {
 						// resetVote();
+						try {
+							Thread.sleep(ThreadLocalRandom.current().nextInt(0, 150) + 150);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 
 						becomeCanidate();
 					}
@@ -276,7 +282,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	}
 
 	public void voteLeader(Message msg) {
-		System.out.println(Integer.parseInt(msg.getPayload(), 10) +">"+ term +" " +(Integer.parseInt(msg.getPayload(), 10) > term));
+		System.out.println(Integer.parseInt(msg.getPayload(), 10) + ">" + term + " "
+				+ (Integer.parseInt(msg.getPayload(), 10) > term));
 		if (Integer.parseInt(msg.getPayload(), 10) > term) {
 			restartElectionTimeout();
 			System.out.println("I Voted for somebody");
@@ -284,11 +291,17 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			didVote = true;
 			term = Integer.parseInt(msg.getPayload(), 10);
 			lastVote = msg.getSenderAsClient();
-			Message ballot = new Message("null", msg.getPayload(), MessageType.Vote);
+			Message ballot = new Message(thisClient, msg.getPayload(), MessageType.Vote);
 			sender.sendMessageAutoRetry(ballot, msg.getSenderAsClient(), 10, "Vote failed");
-		}else{
-			Message m=new Message(thisClient,term+"",MessageType.AlreadyVoted);
-			sender.sendMessageAutoRetry(m, msg.getSenderAsClient(), 1, "");
+		} else {
+//			Message m=new Message(thisClient,term+"",MessageType.AlreadyVoted);
+//			try {
+//				sender.sendMessage(m, msg.getSenderAsClient());
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+			System.out.println("restarting ELT");
+			restartElectionTimeout();
 		}
 	}
 
@@ -300,7 +313,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	}
 
 	private long votingCycle() {
-		int random = (ThreadLocalRandom.current().nextInt(100, 150) + 150);
+		int random = (ThreadLocalRandom.current().nextInt(0, 150) + 150);
 		return Long.valueOf(random);
 	}
 
@@ -433,7 +446,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private void heartbeat() {
 		checkIfMessageInPipline();
-		// System.out.println("Heartbeat");
+		 System.out.println("Heartbeat");
 		lastHeartbeat = System.currentTimeMillis();
 		if (q.isEmpty() || twoLeaders) {
 			sendNormalHeartbeat();
@@ -539,8 +552,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	}
 
 	private void checkVote() {
-		System.out.println("Check Vote Term:" + term);
-		//System.out.println(Phonebook.exportPhonebook());
+		System.out.println("Check if Majority Term:" + term);
+		// System.out.println(Phonebook.exportPhonebook());
 		if (Phonebook.countPhonebookEntries() == 0) {
 			System.out.println("ERROR- Empty phonebook");
 		} else {
@@ -548,7 +561,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				System.out.println("Majority Reached");
 				becomeLeader();
 			}
-			System.out.println(votes + "(votes) VS (nodes)" + (Phonebook.countPhonebookEntries() / 2));
+			System.out.println(votes + "(votes) VS (nodes for Majority)" + (Phonebook.countPhonebookEntries() / 2) + 1);
 
 		}
 
@@ -586,10 +599,12 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	@Override
 	public void onMessageReceived(Message message, PrintWriter response) {
 		if (message.getType() != MessageType.Heartbeat) {
-			System.out.println("New Message of Type " + message.getType());
+			System.out.println("New Message -----------------------------");
+			
 		}
 		switch (message.getType()) {
 		case AlreadyVoted:
+			System.out.println(message.getPayload() + "vs mine:" + term);
 			break;
 		case Heartbeat:
 			if (role != 2) {
@@ -644,11 +659,12 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				role = 0;
 				syncRoleWithPhonebook();
 				restartElectionTimeout();
-				
+
 			}
 			break;
 		case Vote:
 			System.out.println("recieved Vote");
+			votes++;
 			if (role == 1) {
 				checkVote();
 			}
@@ -673,6 +689,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 			} else {
 				newLeaderChosen(message.getSenderAsClient());
+				
 				role = 0;
 				syncRoleWithPhonebook();
 			}
