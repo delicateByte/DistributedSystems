@@ -257,7 +257,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					if (role != 2) {
 						// resetVote();
 						try {
-							Thread.sleep(ThreadLocalRandom.current().nextInt(0, 150) + 150);
+							//Thread.sleep(ThreadLocalRandom.current().nextInt(0, 200) + 150);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -569,10 +569,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private void becomeLeader() {
 		System.out.println("Elected Leader");
-		role = 2;
+		role = 2;		
+		raftCycleManager.cancel();
+
 		taskList.clear();
 		stopElectionTimeout();
-		raftCycleManager.cancel();
 
 		Phonebook.newLeader(thisClient);
 		heartbeatTimer = new Timer("Heartbeat-" + term);
