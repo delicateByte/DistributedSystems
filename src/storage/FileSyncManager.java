@@ -56,6 +56,10 @@ public class FileSyncManager {
 		if(messages.size() > MAX_MESSAGES)	// remove topmost message if we have more 
 			messages.remove(0);			  	// messages than MAX_MESSAGES
 		sort();
+		
+		for(ChatMessage m  : messages) {
+			System.out.println("====== " + ChatMessage.chatMessageObjectToString(m));
+		}
 	}
 	
 	public static List<ChatMessage> getMessages() {

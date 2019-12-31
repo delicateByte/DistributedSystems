@@ -35,7 +35,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	private int idCounter = 1;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	private boolean debug = true;
+	private boolean debug = false;
 
 	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
@@ -504,11 +504,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		} else {
 			if (debug)
 				System.out.println("ERROR- No Task like that");
-			try {
-				Thread.sleep(100000L);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				Thread.sleep(100000L);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
 		}
 	}
 
@@ -527,11 +527,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		} else {
 			if (debug)
 				System.out.println("ERROR- No Task like that");
-			try {
-				Thread.sleep(100000L);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 
@@ -880,7 +875,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	public boolean onMessageSend(String message) {
 		// TODO implement what happens when a message should be sent
 		if (role == 2) {
-			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(),
+			ChatMessage msg = new ChatMessage(idCounter, message, thisClient.getIp() + "-" + thisClient.getPort(),
 					System.currentTimeMillis());
 			String payload = ChatMessage.chatMessageObjectToString(msg);
 			if (debug) {
@@ -889,7 +884,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			Message m = new Message(thisClient, payload, MessageType.NewMessageForwardedToLeader);
 			newMessageForwardedToLeader(m);
 		} else {
-			ChatMessage msg = new ChatMessage(0, message, thisClient.getIp() + "-" + thisClient.getPort(),
+			ChatMessage msg = new ChatMessage(idCounter, message, thisClient.getIp() + "-" + thisClient.getPort(),
 					System.currentTimeMillis());
 			String payload = ChatMessage.chatMessageObjectToString(msg);
 			if (debug) {
