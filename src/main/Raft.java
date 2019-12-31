@@ -728,10 +728,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		case Heartbeat:
 			if (role != 2) {
 				lastHeartbeat = System.currentTimeMillis();
-				if (debug)
-					// System.out.println("Heartbeat recieved");
-					// System.out.println("restart ELT" + lastHeartbeat);
-					restartElectionTimeout();
+				restartElectionTimeout();
 				role = 0;
 				syncRoleWithPhonebook();
 			}
@@ -762,6 +759,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 			} else {
 				restartElectionTimeout();
+				raftCycleManager.cancel();
 
 				cacheTheMessage(message);
 			}
