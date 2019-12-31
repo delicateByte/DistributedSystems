@@ -35,7 +35,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	private int idCounter = 1;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	private boolean debug = true;
+	private boolean debug = false;
 
 	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
@@ -157,10 +157,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 				String payload = msg.getPayload();
 				ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
-				messageResponseAggregator.put(extractId.getId(), 0);
+				messageResponseAggregator.put(extractId.getId(), 1);
 			} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline && !twoLeaders) {
 				newMessage = false;
 				String payload = msg.getPayload();
+				messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 				ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
 				Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
 				q.offer(cacheMessage);
@@ -217,7 +218,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					newTask.setComparePayloads(msg.getPayload());
 					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
-					for (ChatMessage m : messageCache) {
+					for (ChatMessage m : messageCache) { // TODO: BENGIN Iterator
 						if (m.getId() == ChatMessage.chatMessageStringToObject(msg.getPayload()).getId()) {
 							messageCache.remove(m);
 						}
