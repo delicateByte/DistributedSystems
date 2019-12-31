@@ -190,13 +190,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	public boolean findTask(AwaitingResponse r) {
 		for(AwaitingResponse a : taskList) {
 			//TODO: FIX THE OR to an AND
-			if(a.getComparePayloads().equals(r.getComparePayloads())|| a.getType() == r.getType() && a.getResponder().getIp() == r.getResponder().getIp() && r.getResponder().getPort() == a.getResponder().getPort()) 
+			if(a.getComparePayloads().equals(r.getComparePayloads()) || a.getType() == r.getType() && a.getResponder().getIp().equals(r.getResponder().getIp()) && r.getResponder().getPort() == a.getResponder().getPort()) {
 				return true;
-			if(!debug) {
-				System.out.println(a.getType()+a.getComparePayloads()+a.getResponder().getPort());
-				System.out.println(r.getType()+r.getComparePayloads()+r.getResponder().getPort());
-				System.out.println((a.getComparePayloads().equals(r.getComparePayloads())|| a.getType() == r.getType() && a.getResponder().getIp() == r.getResponder().getIp() && r.getResponder().getPort() == a.getResponder().getPort()));
-
 			}
 		}
 		return false;
