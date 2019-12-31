@@ -39,17 +39,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
-			if (lastHeartbeat < (System.currentTimeMillis() - 300)) {
-				if (debug)
-					System.out.println("started TimerTask");
-
-				if (role != 2) {
-					becomeCandidate();
-				}
-				// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
-				// problem with the Leader and a new needs to be elected
-
-			}
+			raftCycle();
 		}
 
 	};
@@ -95,6 +85,22 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	// EMPTY
 	public void initialJoin() {
 
+	}
+	
+	private void raftCycle() {
+		if (lastHeartbeat < (System.currentTimeMillis() - 300)) {
+			if (debug)
+				System.out.println("started TimerTask");
+
+			if (role != 2) {
+				if(Phonebook.getLeader() != null)
+					Phonebook.deleteClient(Phonebook.getLeader());
+				becomeCandidate();
+			}
+			// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
+			// problem with the Leader and a new needs to be elected
+
+		}
 	}
 
 	@Override
@@ -277,12 +283,12 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	public void controllHashMap(int k, int v) {
 		if (messageResponseAggregator.containsKey(k)) {
-			System.out.println("added" + k + v);
+//			System.out.println("added" + k + v);
 			if (messageResponseAggregator.get(k) != v) {
 				messageResponseAggregator.put(k, v);
 			}
 		} else {
-			System.out.println("added" + k + v);
+//			System.out.println("added" + k + v);
 
 			messageResponseAggregator.putIfAbsent(k, v);
 		}
@@ -337,26 +343,17 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		stopElectionTimeout();
 		TimerTask raftCycleReset = new TimerTask() {
 			public void run() {
-				if (lastHeartbeat < (System.currentTimeMillis() - 300)) {
-					if (debug)
-						System.out.println("Executing TimerTask as Role:" + role);
-
-					if (role != 2) {
-						// resetVote();
-
-						becomeCandidate();
-					}
-
-				}
+				raftCycle();
 			}
 		};
 		electionTimeout = new Timer("Raftcycle-" + cycle);
 		// System.out.println("TimerReseted" + "Raftcycle-" + cycle);
-		electionTimeout.scheduleAtFixedRate(raftCycleReset, 0, votingCycle());
+		electionTimeout.scheduleAtFixedRate(raftCycleReset, 400, votingCycle());
 		raftCycleManager = raftCycleReset;
 	}
 
 	public void stopElectionTimeout() {
+		raftCycleManager.cancel();
 		electionTimeout.cancel();
 		electionTimeout.purge();
 		cycle = cycle + 1;
@@ -504,8 +501,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		AwaitingResponse ergebnis = null;
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			System.out.println(
-					task.getResponder().getIp().equals(clnt.getIp()) + clnt.getIp() + task.getResponder().getIp());
 			if (task.getResponder().getIp().equals(clnt.getIp()) && task.getResponder().getPort() == (clnt.getPort())
 					&& task.getType() == type) {
 				ergebnis = task;
@@ -529,8 +524,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		AwaitingResponse ergebnis = null;
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			System.out.println(
-					task.getResponder().getIp().equals(clnt.getIp()) + clnt.getIp() + task.getResponder().getIp());
 			if (task.getResponder().getIp().equals(clnt.getIp()) && task.getResponder().getPort() == (clnt.getPort())
 					&& task.getType() == type) {
 				ergebnis = task;
@@ -838,8 +831,10 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				sender.sendMessageAutoRetry(idCounterMsg, message.getSenderAsClient(), 10,
 						"could not deliver idCounter");
 
-				Message historyMsg = new Message(thisClient, FileSyncManager.exportHistory(), MessageType.TakeHistory);
-				sender.sendMessageAutoRetry(historyMsg, message.getSenderAsClient(), 10, "could not deliver history");
+				if(!FileSyncManager.exportHistory().equals("")) {
+					Message historyMsg = new Message(thisClient, FileSyncManager.exportHistory(), MessageType.TakeHistory);
+					sender.sendMessageAutoRetry(historyMsg, message.getSenderAsClient(), 10, "could not deliver history");
+				}
 			} else {
 				Phonebook.importPhonebook(message.getPayload());
 			}

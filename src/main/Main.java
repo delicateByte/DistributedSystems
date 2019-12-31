@@ -76,16 +76,16 @@ public class Main{
 			ClientConnector cc = new ClientConnector(me, sender);
 			in.registerListener(cc);
 			
-			// raft
-			Raft myRaft = new Raft(me);
-			Thread raftThread = new Thread(myRaft);
-			in.registerListener(myRaft);
-			raftThread.start();
 			
 			//send ich bin ready
 			Message ready = new Message(me, "", MessageType.ReadyForRaft);
 			sender.sendMessageAutoRetry(ready, leader, 10, "I am ready could not be sent");
 			
+			// raft
+			Raft myRaft = new Raft(me);
+			Thread raftThread = new Thread(myRaft);
+			in.registerListener(myRaft);
+			raftThread.start();
 			
 			ChatMessageGenerator.spamThis(myRaft);
 			
