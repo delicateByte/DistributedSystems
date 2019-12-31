@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
@@ -36,7 +35,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	private int idCounter = 1;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	private boolean debug = false;
+	private boolean debug = true;
 
 	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
@@ -472,8 +471,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private void heartbeat() {
 		checkIfMessageInPipline();
-		if (debug)
-			System.out.println("Heartbeat");
 		lastHeartbeat = System.currentTimeMillis();
 		if (q.isEmpty() || twoLeaders) {
 			sendNormalHeartbeat();
@@ -596,7 +593,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			if (debug)
 				System.out.println(
 						votes + "(votes) VS (nodes for Majority)" + (Phonebook.countPhonebookEntries() / 2) + 1);
-
 		}
 
 	}
@@ -641,6 +637,13 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			}
 		}
 		switch (message.getType()) {
+		case TakeHistory:
+			FileSyncManager.saveFromString(message.getPayload());
+			break;
+		case TakeIdCounter:
+			idCounter = Integer.parseInt(message.getPayload());
+			break;
+			
 		case AlreadyVoted:
 			if (debug)
 				System.out.println(message.getPayload() + "vs mine:" + term);
@@ -741,6 +744,12 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
 						MessageType.NewClientInPhonebookSyncronizeWithAllClients);
 				q.offer(newBroadcastSyncPhonebook);
+				
+				Message idCounterMsg = new Message(thisClient, ""+idCounter, MessageType.TakeIdCounter);
+				sender.sendMessageAutoRetry(idCounterMsg, message.getSenderAsClient(), 10, "could not deliver idCounter");
+				
+				Message historyMsg = new Message(thisClient, FileSyncManager.exportHistory(), MessageType.TakeHistory);
+				sender.sendMessageAutoRetry(historyMsg, message.getSenderAsClient(), 10, "could not deliver history");
 			} else {
 				Phonebook.importPhonebook(message.getPayload());
 			}
@@ -785,7 +794,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 //			break;
 		default:
 			break;
-
 		}
 	}
 

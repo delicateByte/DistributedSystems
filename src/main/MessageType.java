@@ -18,5 +18,7 @@ public enum MessageType {
 	HeartbeatResponse,	
 	ReadyForRaft,
 	MessageWritten,
-	ResolveTwoLeaders
+	ResolveTwoLeaders,
+	TakeIdCounter,
+	TakeHistory,
 }
