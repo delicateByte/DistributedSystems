@@ -99,6 +99,7 @@ public class FileSyncManager {
 			strings.add(messageString.replace("-", "\\-"));
 		}
 		return String.join("-", strings);
+		
 	}
 	
 	public static List<ChatMessage> saveFromString(String input){
