@@ -189,7 +189,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	
 	public boolean findTask(AwaitingResponse r) {
 		for(AwaitingResponse a : taskList) {
-			if(a.getComparePayloads().equals(r.getComparePayloads())&& a.getType() == r.getType() && a.getResponder().getIp() == r.getResponder().getIp() && r.getResponder().getPort() == a.getResponder().getPort()) 
+			//TODO: FIX THE OR to an AND
+			if(a.getComparePayloads().equals(r.getComparePayloads())|| a.getType() == r.getType() && a.getResponder().getIp() == r.getResponder().getIp() && r.getResponder().getPort() == a.getResponder().getPort()) 
 				return true;
 			if(!debug) {
 				System.out.println(a.getType()+a.getComparePayloads()+a.getResponder().getPort());
@@ -453,7 +454,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			if (task.getResponder() == clnt && task.getType() == type) {
+			System.out.println(task.getResponder().getIp().equals(clnt.getIp())+clnt.getIp() +task.getResponder().getIp());
+			if (task.getResponder().getIp().equals(clnt.getIp())&& task.getResponder().getPort() ==(clnt.getPort())&& task.getType() == type) {
 				itrTaskList.remove();
 			} else {
 				if (debug)
@@ -472,7 +474,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			if (task.getResponder() == clnt && task.getType() == type && task.getComparePayloads() == payload) {
+			System.out.println(task.getResponder().getIp().equals(clnt.getIp())+clnt.getIp() +task.getResponder().getIp());
+			if (task.getResponder().getIp().equals(clnt.getIp())&& task.getResponder().getPort() ==(clnt.getPort())&& task.getType() == type) {
 				itrTaskList.remove();
 			} else {
 				if (debug)
