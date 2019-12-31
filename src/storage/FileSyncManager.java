@@ -57,9 +57,9 @@ public class FileSyncManager {
 			messages.remove(0);			  	// messages than MAX_MESSAGES
 		sort();
 		
-		for(ChatMessage m  : messages) {
-			System.out.println("====== " + ChatMessage.chatMessageObjectToString(m));
-		}
+//		for(ChatMessage m  : messages) {
+//			System.out.println("====== " + ChatMessage.chatMessageObjectToString(m));
+//		}
 	}
 	
 	public static List<ChatMessage> getMessages() {

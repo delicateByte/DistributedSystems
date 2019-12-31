@@ -12,7 +12,7 @@ public class ChatMessage implements Comparable<ChatMessage>{
 		this.sender = sender;
 		this.id = id;
 		this.timestamp = timestamp;
-		System.out.println(id);
+//		System.out.println(id);
 	}
 	
 	public String getText() {
