@@ -116,8 +116,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	public void newMessageForwardedToLeader(Message msg) {
 		ChatMessage cMessage = ChatMessage.chatMessageStringToObject(msg.getPayload());
-		if(debug) {
-			System.out.println(msg.getPayload()+"in MessageForward");
+		if (debug) {
+			System.out.println(msg.getPayload() + "in MessageForward");
 		}
 		cMessage.setId(idCounter);
 		idCounter++;
@@ -133,43 +133,43 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		}
 		if (role == 2 && newMessage && !pipelineEmpty && id < idPipeline && !twoLeaders
 				|| role == 2 && newMessage && pipelineEmpty && !twoLeaders) {
-			//####################################################
+			// ####################################################
 			if (Phonebook.countPhonebookEntries() == 1) {
 				newMessage = false;
-					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
-				newMessage =true;
-			//#######################################################################################
-				} else {
-					newMessage = false;
-					messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-					String payload2 = msg.getPayload();
-					messageResponseAggregator.put(id, 1); // Adds new Key-value pair to the map that checks how
-															// many responses for a message have arrived
-					Message cacheMessage2 = new Message(thisClient, payload2, MessageType.NewMessageToCache);
-					q.offer(cacheMessage2);
-					// sender.broadcastMessage(cacheMessage);
-					AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
-					newTask.setComparePayloads(msg.getPayload());
-					addBroadcastResponseTask(newTask);
-				}
-			} else if (role == 2 && !newMessage) {
-				messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-				String payload = msg.getPayload();
-				ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
-				messageResponseAggregator.put(extractId.getId(), 1);
-			} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline && !twoLeaders) {
+				FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+				FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
+				newMessage = true;
+				// #######################################################################################
+			} else {
 				newMessage = false;
-				String payload = msg.getPayload();
 				messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
-				ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
-				Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
-				q.offer(cacheMessage);
+				String payload2 = msg.getPayload();
+				messageResponseAggregator.put(id, 1); // Adds new Key-value pair to the map that checks how
+														// many responses for a message have arrived
+				Message cacheMessage2 = new Message(thisClient, payload2, MessageType.NewMessageToCache);
+				q.offer(cacheMessage2);
 				// sender.broadcastMessage(cacheMessage);
 				AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
 				newTask.setComparePayloads(msg.getPayload());
 				addBroadcastResponseTask(newTask);
-			
+			}
+		} else if (role == 2 && !newMessage) {
+			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+			String payload = msg.getPayload();
+			ChatMessage extractId = ChatMessage.chatMessageStringToObject(payload);
+			messageResponseAggregator.put(extractId.getId(), 1);
+		} else if (role == 2 && newMessage && !pipelineEmpty && id > idPipeline && !twoLeaders) {
+			newMessage = false;
+			String payload = msg.getPayload();
+			messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
+			ChatMessage extractId = ChatMessage.chatMessageStringToObject(msg.getPayload());
+			Message cacheMessage = new Message(thisClient, payload, MessageType.NewMessageToCache);
+			q.offer(cacheMessage);
+			// sender.broadcastMessage(cacheMessage);
+			AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageCached);
+			newTask.setComparePayloads(msg.getPayload());
+			addBroadcastResponseTask(newTask);
+
 		}
 	}
 
@@ -186,17 +186,20 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			addBroadcastResponseTask(newTask);
 		}
 	}
-	
+
 	public boolean findTask(AwaitingResponse r) {
-		for(AwaitingResponse a : taskList) {
-			//TODO: FIX THE OR to an AND
-			if(a.getComparePayloads().equals(r.getComparePayloads()) || a.getType() == r.getType() && a.getResponder().getIp().equals(r.getResponder().getIp()) && r.getResponder().getPort() == a.getResponder().getPort()) {
+		for (AwaitingResponse a : taskList) {
+			// TODO: FIX THE OR to an AND
+			if (a.getComparePayloads().equals(r.getComparePayloads())
+					|| a.getType() == r.getType() && a.getResponder().getIp().equals(r.getResponder().getIp())
+							&& r.getResponder().getPort() == a.getResponder().getPort()) {
 				return true;
 			}
 		}
 		return false;
-		
+
 	}
+
 	public void gatherCacheResponses(Message msg) {
 		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
@@ -241,27 +244,29 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		}
 	}
 
-//TODO: MEssage Written delet from Tasklist
 	public void cacheTheMessage(Message msg) {
 		messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageCached);
-			sender.sendMessageAutoRetry(response, Phonebook.getLeader(), 20, "could not send to LEader");
-
+		sender.sendMessageAutoRetry(response, Phonebook.getLeader(), 20, "could not send to LEader");
 	}
 
 	public void writeTheMesssage(Message msg) {
 		ChatMessage extract = ChatMessage.chatMessageStringToObject(msg.getPayload());
 		idCounter = extract.getId() + 1;
 		FileSyncManager.addMessage(extract);
-		for (ChatMessage m : messageCache) {
+		Iterator<ChatMessage> chdMsgitr = messageCache.iterator();
+		while (chdMsgitr.hasNext()) {
+			ChatMessage m = chdMsgitr.next();
 			if (m.getId() == extract.getId()) {
 				messageCache.remove(m);
 			}
+
 		}
 		FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageWritten);
 		try {
-			sender.sendMessageAutoRetry(response, Phonebook.getLeader(), 5, "Did not Confirm message written to leader");
+			sender.sendMessageAutoRetry(response, Phonebook.getLeader(), 5,
+					"Did not Confirm message written to leader");
 		} catch (Exception e) {
 
 		}
@@ -437,7 +442,8 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private void addBroadcastResponseTask(AwaitingResponse task) {
 		for (Client c : phonebook.getFullPhonebook()) {
-			if(c.getPort() != thisClient.getPort() || c.getIp() != thisClient.getIp() && c.getPort() == thisClient.getPort() ) {
+			if (c.getPort() != thisClient.getPort()
+					|| c.getIp() != thisClient.getIp() && c.getPort() == thisClient.getPort()) {
 				task.setResponder(c);
 				addTask(task);
 			}
@@ -449,8 +455,10 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			System.out.println(task.getResponder().getIp().equals(clnt.getIp())+clnt.getIp() +task.getResponder().getIp());
-			if (task.getResponder().getIp().equals(clnt.getIp())&& task.getResponder().getPort() ==(clnt.getPort())&& task.getType() == type) {
+			System.out.println(
+					task.getResponder().getIp().equals(clnt.getIp()) + clnt.getIp() + task.getResponder().getIp());
+			if (task.getResponder().getIp().equals(clnt.getIp()) && task.getResponder().getPort() == (clnt.getPort())
+					&& task.getType() == type) {
 				itrTaskList.remove();
 			} else {
 				if (debug)
@@ -469,8 +477,10 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
-			System.out.println(task.getResponder().getIp().equals(clnt.getIp())+clnt.getIp() +task.getResponder().getIp());
-			if (task.getResponder().getIp().equals(clnt.getIp())&& task.getResponder().getPort() ==(clnt.getPort())&& task.getType() == type) {
+			System.out.println(
+					task.getResponder().getIp().equals(clnt.getIp()) + clnt.getIp() + task.getResponder().getIp());
+			if (task.getResponder().getIp().equals(clnt.getIp()) && task.getResponder().getPort() == (clnt.getPort())
+					&& task.getType() == type) {
 				itrTaskList.remove();
 			} else {
 				if (debug)
@@ -660,7 +670,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		case TakeIdCounter:
 			idCounter = Integer.parseInt(message.getPayload());
 			break;
-			
+
 		case AlreadyVoted:
 			if (debug)
 				System.out.println(message.getPayload() + "vs mine:" + term);
@@ -699,9 +709,9 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			}
 			break;
 		case NewMessageToCache:
-			if(role ==2){
-				
-			}else {
+			if (role == 2) {
+
+			} else {
 				cacheTheMessage(message);
 			}
 			break;
@@ -765,10 +775,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				Message newBroadcastSyncPhonebook = new Message(thisClient, Phonebook.exportPhonebook(),
 						MessageType.NewClientInPhonebookSyncronizeWithAllClients);
 				q.offer(newBroadcastSyncPhonebook);
-				
-				Message idCounterMsg = new Message(thisClient, ""+idCounter, MessageType.TakeIdCounter);
-				sender.sendMessageAutoRetry(idCounterMsg, message.getSenderAsClient(), 10, "could not deliver idCounter");
-				
+
+				Message idCounterMsg = new Message(thisClient, "" + idCounter, MessageType.TakeIdCounter);
+				sender.sendMessageAutoRetry(idCounterMsg, message.getSenderAsClient(), 10,
+						"could not deliver idCounter");
+
 				Message historyMsg = new Message(thisClient, FileSyncManager.exportHistory(), MessageType.TakeHistory);
 				sender.sendMessageAutoRetry(historyMsg, message.getSenderAsClient(), 10, "could not deliver history");
 			} else {
