@@ -304,7 +304,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		while (chdMsgitr.hasNext()) {
 			ChatMessage m = chdMsgitr.next();
 			if (m.getId() == extract.getId()) {
-				messageCache.remove(m);
+				chdMsgitr.remove();
 			}
 
 		}
