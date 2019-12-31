@@ -67,7 +67,11 @@ public class MessageSender {
 	 * the message was delivered successfully). 
 	 */
 	public void broadcastMessage(Message message, boolean retry, String error) {
+		List<Client> tempClients = new ArrayList<Client>();
 		for(Client c : Phonebook.getFullPhonebook()) {
+			tempClients.add(c);
+		}
+		for(Client c : tempClients) {
 			if(!c.getIp().equals(message.getSenderAsClient().getIp()) || c.getPort() != message.getSenderAsClient().getPort()) {
 				Thread sender = new Thread(new Runnable() {
 					@Override
