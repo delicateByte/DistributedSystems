@@ -82,7 +82,7 @@ public class FileSyncManager {
 	 */
 	private static void syncToFile(String identifier, List<ChatMessage> messages) {
 		try {	
-			bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
+			bw = new BufferedWriter(new FileWriter("./save_files/" + identifier + ".ciao"));
 			bw.write(getString(messages));
 			bw.flush();
 			bw.close();
@@ -116,7 +116,7 @@ public class FileSyncManager {
 	private static List<ChatMessage> syncFromFile(String identifier) {
 		List<ChatMessage> messages = new ArrayList<ChatMessage>();
 		try {
-			br = new BufferedReader(new FileReader(new File("./" + identifier + ".ciao")));
+			br = new BufferedReader(new FileReader(new File("./save_files/" + identifier + ".ciao")));
 			String fileIn = br.readLine();
 			saveFromString(fileIn);
 		} catch (IOException e) {

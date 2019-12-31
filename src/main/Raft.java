@@ -34,7 +34,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	private int idCounter = 1;
 	// Raft Timer
 	Timer electionTimeout = new Timer("raftCycle-0");
-	private boolean debug = true;
+	private boolean debug = false;
 
 	TimerTask raftCycleManager = new TimerTask() {
 		public void run() {
