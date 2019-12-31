@@ -216,9 +216,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					newTask.setComparePayloads(msg.getPayload());
 					FileSyncManager.addMessage(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 					FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
-					for (ChatMessage m : messageCache) { // TODO: BENGIN Iterator
+					Iterator<ChatMessage> it = messageCache.iterator();
+					while(it.hasNext()) {
+						ChatMessage m = it.next();
 						if (m.getId() == ChatMessage.chatMessageStringToObject(msg.getPayload()).getId()) {
-							messageCache.remove(m);
+							it.remove();
 						}
 					}
 					addBroadcastResponseTask(newTask);
