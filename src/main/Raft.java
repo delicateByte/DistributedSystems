@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -240,7 +239,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				if (debug)
 					System.out.println("found KEy Value Pair of corresponding msg------");
 				messageResponseAggregator.put(msgId, messageResponseAggregator.get(msgId) + 1);
-				if (messageResponseAggregator.get(msgId) > (Phonebook.countPhonebookEntries() / 2)) {
+				if (messageResponseAggregator.get(msgId) == Phonebook.countPhonebookEntries()/2+1) {		// <--- work here
 					Message writeMessage = new Message(thisClient, msg.getPayload(), MessageType.WriteMessage);
 					AwaitingResponse newTask = new AwaitingResponse(thisClient, MessageType.MessageWritten);
 					newTask.setComparePayloads(msg.getPayload());
