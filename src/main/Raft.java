@@ -44,7 +44,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					System.out.println("started TimerTask");
 
 				if (role == 0) {
-					becomeCanidate();
+					becomeCandidate();
 				}
 				// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
 				// problem with the Leader and a new needs to be elected
@@ -185,11 +185,27 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			addBroadcastResponseTask(newTask);
 		}
 	}
+	
+	public boolean findTask(AwaitingResponse r) {
+		for(AwaitingResponse a : taskList) {
+			if(a.getComparePayloads().equals(r.getComparePayloads())&& a.getType() == r.getType() && a.getResponder().getIp() == r.getResponder().getIp() && r.getResponder().getPort() == a.getResponder().getPort()) 
+				return true;
+			if(!debug) {
+				System.out.println(a.getType()+a.getComparePayloads()+a.getResponder().getPort());
+				System.out.println(r.getType()+r.getComparePayloads()+r.getResponder().getPort());
+				System.out.println((a.getComparePayloads().equals(r.getComparePayloads())|| a.getType() == r.getType() && a.getResponder().getIp() == r.getResponder().getIp() && r.getResponder().getPort() == a.getResponder().getPort()));
 
+			}
+		}
+		return false;
+		
+	}
 	public void gatherCacheResponses(Message msg) {
 		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
 		cmp.setComparePayloads(msg.getPayload());
-		if (taskList.contains(cmp)) {
+//		System.out.println(cmp.getType()+msg.getPayload());
+
+		if (findTask(cmp)) {
 			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload());
 			int msgId = ChatMessage.chatMessageStringToObject(msg.getPayload()).getId();
 			if (messageResponseAggregator.containsKey(msgId)) {
@@ -221,18 +237,19 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 	}
 
 	public void gatherWriteResponses(Message msg) {
-
+		AwaitingResponse cmp = new AwaitingResponse(msg.getSenderAsClient(), msg.getType());
+		cmp.setComparePayloads(msg.getPayload());
+		if (taskList.contains(cmp)) {
+			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload());
+		}
 	}
 
 //TODO: MEssage Written delet from Tasklist
 	public void cacheTheMessage(Message msg) {
 		messageCache.add(ChatMessage.chatMessageStringToObject(msg.getPayload()));
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageCached);
-		try {
-			sender.sendMessage(response, Phonebook.getLeader());
-		} catch (Exception e) {
-			System.out.println("[RAFT] ERROR-1");
-		}
+			sender.sendMessageAutoRetry(response, Phonebook.getLeader(), 20, "could not send to LEader");
+
 	}
 
 	public void writeTheMesssage(Message msg) {
@@ -247,7 +264,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		FileSyncManager.save(thisClient.getIp() + "-" + thisClient.getPort());
 		Message response = new Message(thisClient, msg.getPayload(), MessageType.MessageWritten);
 		try {
-			sender.sendMessage(response, Phonebook.getLeader());
+			sender.sendMessageAutoRetry(response, Phonebook.getLeader(), 5, "Did not Confirm message written to leader");
 		} catch (Exception e) {
 
 		}
@@ -277,7 +294,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					if (role != 2) {
 						// resetVote();
 
-						becomeCanidate();
+						becomeCandidate();
 					}
 
 				}
@@ -559,9 +576,10 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		}
 	}
 
-	private void becomeCanidate() {
-		if (debug)
+	private void becomeCandidate() {
+		if (debug) {
 			System.out.println("President Elect");
+		}
 		resetVote();
 		role = 1;
 		syncRoleWithPhonebook();
@@ -682,7 +700,11 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 			}
 			break;
 		case NewMessageToCache:
-
+			if(role ==2){
+				
+			}else {
+				cacheTheMessage(message);
+			}
 			break;
 		case RequestVoteForMe:
 			if (role == 2) {
