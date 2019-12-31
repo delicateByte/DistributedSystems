@@ -3,7 +3,6 @@ package storage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -68,6 +67,10 @@ public class FileSyncManager {
 	}
 	
 
+	public static String exportHistory() {
+		return getString(messages);
+	}
+	
 	/**
 	 * Syncs the content of the the arraylist to a file 
 	 * @param identifier a unique id for this instance (for example IP+Port)
@@ -76,18 +79,34 @@ public class FileSyncManager {
 	private static void syncToFile(String identifier, List<ChatMessage> messages) {
 		try {	
 			bw = new BufferedWriter(new FileWriter("./" + identifier + ".ciao"));
-			List<String> strings = new ArrayList<String>();
-			String messageString = "";
-			for(ChatMessage message : messages) {
-				messageString = ChatMessage.chatMessageObjectToString(message);
-				strings.add(messageString.replace("-", "\\-"));
-			}
-			bw.write(String.join("-", strings));
+			bw.write(getString(messages));
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static String getString(List<ChatMessage> messages) {
+		List<String> strings = new ArrayList<String>();
+		String messageString = "";
+		for(ChatMessage message : messages) {
+			messageString = ChatMessage.chatMessageObjectToString(message);
+			strings.add(messageString.replace("-", "\\-"));
+		}
+		return String.join("-", strings);
+	}
+	
+	public static List<ChatMessage> saveFromString(String input){
+		List<ChatMessage> toReturn = new ArrayList<ChatMessage>();
+		
+		List<String> messageStrings = Arrays.asList(input.split("(?<!\\\\)-"));
+		
+		for(String messageString : messageStrings) {
+			messageString = messageString.replace("\\-", "-");
+			messages.add(ChatMessage.chatMessageStringToObject(messageString));
+		}
+		return toReturn;
 	}
 
 	private static List<ChatMessage> syncFromFile(String identifier) {
@@ -95,12 +114,7 @@ public class FileSyncManager {
 		try {
 			br = new BufferedReader(new FileReader(new File("./" + identifier + ".ciao")));
 			String fileIn = br.readLine();
-			List<String> messageStrings = Arrays.asList(fileIn.split("(?<!\\\\)-"));
-			
-			for(String messageString : messageStrings) {
-				messageString = messageString.replace("\\-", "-");
-				messages.add(ChatMessage.chatMessageStringToObject(messageString));
-			}
+			saveFromString(fileIn);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
