@@ -43,7 +43,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 				if (debug)
 					System.out.println("started TimerTask");
 
-				if (role == 0) {
+				if (role != 2) {
 					becomeCandidate();
 				}
 				// Multiple Heartbeats in one elevtionTimeout==> if Timer is over there is a
@@ -501,44 +501,50 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 
 	private void findAndDeleteTask(Client clnt, MessageType type) {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
+		AwaitingResponse ergebnis = null;
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
 			System.out.println(
 					task.getResponder().getIp().equals(clnt.getIp()) + clnt.getIp() + task.getResponder().getIp());
 			if (task.getResponder().getIp().equals(clnt.getIp()) && task.getResponder().getPort() == (clnt.getPort())
 					&& task.getType() == type) {
-				itrTaskList.remove();
-			} else {
-				if (debug)
-					System.out.println("ERROR- No Task like that");
-				try {
-					Thread.sleep(100000L);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-
+				ergebnis = task;
+			}
+		}
+		if(ergebnis != null) {
+			taskList.remove(ergebnis);
+		} else {
+			if (debug)
+				System.out.println("ERROR- No Task like that");
+			try {
+				Thread.sleep(100000L);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
 
 	private void findAndDeleteTask(Client clnt, MessageType type, String payload) {
 		Iterator<AwaitingResponse> itrTaskList = taskList.iterator();
+		AwaitingResponse ergebnis = null;
 		while (itrTaskList.hasNext()) {
 			AwaitingResponse task = itrTaskList.next();
 			System.out.println(
 					task.getResponder().getIp().equals(clnt.getIp()) + clnt.getIp() + task.getResponder().getIp());
 			if (task.getResponder().getIp().equals(clnt.getIp()) && task.getResponder().getPort() == (clnt.getPort())
 					&& task.getType() == type) {
-				itrTaskList.remove();
-			} else {
-				if (debug)
-					System.out.println("ERROR- No Task like that");
-				try {
-					Thread.sleep(100000L);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-
+				ergebnis = task;
+			}
+		}
+		if(ergebnis != null) {
+			taskList.remove(ergebnis);
+		} else {
+			if (debug)
+				System.out.println("ERROR- No Task like that");
+			try {
+				Thread.sleep(100000L);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
