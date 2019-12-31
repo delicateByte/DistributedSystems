@@ -226,7 +226,7 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 		cmp.setComparePayloads(msg.getPayload());
 //		System.out.println(cmp.getType()+msg.getPayload());
 
-		if (findTask(cmp)) {
+		if (true) {
 			if (debug)
 				System.out.println("Task existed");
 			findAndDeleteTask(msg.getSenderAsClient(), msg.getType(), msg.getPayload());
@@ -261,13 +261,6 @@ public class Raft implements Runnable, NetworkListener, ChatListener {
 					newMessage = true;
 				}
 			}
-		} else {
-			if (debug) {
-				System.out.println("##################");
-				System.out.println("Recieved Message But not in TaskList");
-				System.out.println("##################");
-			}
-
 		}
 	}
 
